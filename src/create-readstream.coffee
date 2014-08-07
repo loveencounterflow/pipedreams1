@@ -47,7 +47,6 @@ module.exports = create_readstream = ( route, label ) ->
     R               = CombinedStream.create()
     for partial_route in routes
       R.append njs_fs.createReadStream partial_route
-    throw new Error "unable to create readstream for argument of type #{rpr type}"
   #.........................................................................................................
   else
     R = njs_fs.createReadStream route
