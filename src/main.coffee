@@ -52,6 +52,9 @@ S                         = require 'string'
     count += 1
     handler null, record
 
+
+#===========================================================================================================
+# SAMPLING / THINNING OUT
 #-----------------------------------------------------------------------------------------------------------
 @$sample = ( p = 0.5, options ) ->
   ### Given a `0 <= p <= 1`, interpret `p` as the *p*robability to *p*ick a given record and otherwise toss
@@ -99,8 +102,42 @@ S                         = require 'string'
     return handler null, record if ( count is 1 and headers ) or rnd() < p
     handler()
 
+
+
+############################################################################################################
+# COLLECTING
+#-----------------------------------------------------------------------------------------------------------
+@$collect = ( input_stream, n, result_handler ) ->
+  collector = []
+  input_stream.on 'end', =>
+    result_handler null, collector if collector.length > 0
+    result_handler null, null
+  #.........................................................................................................
+  return @$ ( record, handler ) ->
+    collector.push record
+    #.......................................................................................................
+    if collector.length >= n
+      result_handler null, collector
+      collector = []
+    #.......................................................................................................
+    handler null, collector
+
 #-----------------------------------------------------------------------------------------------------------
 @$collect_sample = ( input_stream, n, options, result_handler ) ->
+  ### Given an `input_stream`, a positive integer number `n`, (facultatively) options, and a `handler`, try
+  to assemble a representative sample with up to `n` records from the stream. When the stream has ended,
+  the handler is called once with (a `null` error argument and) a list of records.
+
+  Similarly to `PIPEDREAMS.$sample`, it is possible to pass in a `headers: true` option to make sure the
+  headers line of a CVS file is not collected. Also similarly, a `seed: 1234` argument can be used to
+  ensure that the sample is arbitrary but constant for the same stream and the same seed.
+
+  Observe that while `$sample` does thin out the stream, `$collect_sample` will never add anything to or
+  omit anything from the stream; in that respect, it is rather more similar to `$collect`.
+
+  The (simple) algorithm this method uses to arrive at a representative, fixed-size sample from a collection
+  of unknown size has been kindly provided by two guys on
+  [Math StackExchange](http://math.stackexchange.com/q/890272/168522). ###
   switch arity = arguments.length
     when 3
       result_handler  = options
@@ -140,13 +177,6 @@ S                         = require 'string'
     #.......................................................................................................
     handler null, record
 
-#-----------------------------------------------------------------------------------------------------------
-get_random_integer = ( rnd, min, max ) ->
-  return ( Math.floor rnd() * ( max + 1 - min ) ) + min
-
-#-----------------------------------------------------------------------------------------------------------
-rnd_from_seed = ( seed ) ->
-  return if seed? then ( require 'coffeenode-bitsnpieces' ).get_rnd seed else Math.random
 
 
 ############################################################################################################
@@ -299,4 +329,15 @@ rnd_from_seed = ( seed ) ->
   return @$ ( record, handler ) =>
     record[ field_name ] = field_value
     handler null, record
+
+
+#===========================================================================================================
+# HELPERS
+#-----------------------------------------------------------------------------------------------------------
+get_random_integer = ( rnd, min, max ) ->
+  return ( Math.floor rnd() * ( max + 1 - min ) ) + min
+
+#-----------------------------------------------------------------------------------------------------------
+rnd_from_seed = ( seed ) ->
+  return if seed? then ( require 'coffeenode-bitsnpieces' ).get_rnd seed else Math.random
 
