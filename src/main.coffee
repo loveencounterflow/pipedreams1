@@ -40,7 +40,7 @@ S                         = require 'string'
 # DELETION
 #-----------------------------------------------------------------------------------------------------------
 @$skip_empty = ->
-  return $ ( record, handler ) =>
+  return @$ ( record, handler ) =>
     return handler() if record.length is 0
     handler null, record
 
@@ -95,7 +95,7 @@ S                         = require 'string'
 #-----------------------------------------------------------------------------------------------------------
 @$parse_csv = ->
   field_names = null
-  return $ ( record, handler ) =>
+  return @$ ( record, handler ) =>
     values = ( S record ).parseCSV ',', '"', '\\'
     if field_names is null
       field_names = values
