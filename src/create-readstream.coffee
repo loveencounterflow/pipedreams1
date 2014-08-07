@@ -1,6 +1,7 @@
 
 
 ############################################################################################################
+njs_util                  = require 'util'
 njs_fs                    = require 'fs'
 #...........................................................................................................
 # TRM                       = require 'coffeenode-trm'
@@ -18,6 +19,9 @@ njs_fs                    = require 'fs'
 #...........................................................................................................
 ### https://github.com/visionmedia/node-progress ###
 ProgressBar               = require 'progress'
+#...........................................................................................................
+### https://github.com/felixge/node-combined-stream ###
+# CombinedStream            = require 'combined-stream'
 #...........................................................................................................
 after                     = ( time_s, f ) -> setTimeout f, time_s * 1000
 
@@ -37,18 +41,19 @@ module.exports = create_readstream = ( route, label ) ->
   # once; this is to prevent longish read operations to be inadvertantly terminated.
   ###
   #.........................................................................................................
-  switch type = TYPES.type_of route
-    when 'text'
-      R = njs_fs.createReadStream route
-    when 'list'
-      routes          = route
-      ### https://github.com/felixge/node-combined-stream ###
-      CombinedStream  = require 'combined-stream'
-      R               = CombinedStream.create()
-      for partial_route in routes
-        R.append njs_fs.createReadStream partial_route
-    else
-      throw new Error "unable to create readstream for argument of type #{rpr type}"
+  if njs_util.isString route
+    R = njs_fs.createReadStream route
+  #.........................................................................................................
+  else if njs_util.isArray route
+    routes          = route
+    ### https://github.com/felixge/node-combined-stream ###
+    CombinedStream  = require 'combined-stream'
+    R               = CombinedStream.create()
+    for partial_route in routes
+      R.append njs_fs.createReadStream partial_route
+  #.........................................................................................................
+  else
+    throw new Error "unable to create readstream for argument of type #{rpr type}"
   #.........................................................................................................
   size            = get_filesize route
   collected_bytes = 0
