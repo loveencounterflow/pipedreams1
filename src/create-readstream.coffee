@@ -55,7 +55,7 @@ module.exports = create_readstream = ( route, label ) ->
   collected_bytes = 0
   bar_is_shown    = no
   is_first_call   = yes
-  format          = "[:bar] :percent | :current / #{size} | +:elapseds -:etas #{label}"
+  format          = "[:bar] :percent | :current / #{size} | +:elapseds -:etas #{label ? ''}"
   #.........................................................................................................
   options   =
     width:      50
