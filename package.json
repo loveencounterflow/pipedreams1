@@ -1,0 +1,29 @@
+{
+  "name": "pipedreams",
+  "version": "0.0.0",
+  "description": "Common text operations for piped NodeJS streams.",
+  "main": "lib/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/loveencounterflow/pipedreams.git"
+  },
+  "keywords": [
+    "pipes",
+    "streams",
+    "text",
+    "csv"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/loveencounterflow/pipedreams/issues"
+  },
+  "homepage": "https://github.com/loveencounterflow/pipedreams",
+  "dependencies": {
+    "progress": "^1.1.7",
+    "string": "^1.9.1"
+  }
+}
