@@ -24,7 +24,7 @@ ES                        = require 'event-stream'
 ### http://c2fo.github.io/fast-csv/index.html, https://github.com/C2FO/fast-csv ###
 S                         = require 'string'
 #...........................................................................................................
-@create_readstream        = require '../create-readstream'
+@create_readstream        = require './create-readstream'
 
 
 ############################################################################################################
