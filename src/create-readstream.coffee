@@ -41,19 +41,17 @@ module.exports = create_readstream = ( route, label ) ->
   # once; this is to prevent longish read operations to be inadvertantly terminated.
   ###
   #.........................................................................................................
-  if njs_util.isString route
-    R = njs_fs.createReadStream route
-  #.........................................................................................................
-  else if njs_util.isArray route
+  if Array.isArray route
     routes          = route
     ### https://github.com/felixge/node-combined-stream ###
     CombinedStream  = require 'combined-stream'
     R               = CombinedStream.create()
     for partial_route in routes
       R.append njs_fs.createReadStream partial_route
+    throw new Error "unable to create readstream for argument of type #{rpr type}"
   #.........................................................................................................
   else
-    throw new Error "unable to create readstream for argument of type #{rpr type}"
+    R = njs_fs.createReadStream route
   #.........................................................................................................
   size            = get_filesize route
   collected_bytes = 0
