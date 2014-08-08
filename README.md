@@ -138,7 +138,7 @@ one record per line of text, splitting into lines is a good preparation for gett
 > an abstraction—the code looks a lot like a Table of Contents where actions are labeled (and not
 > described in detail), but it can be hard to wrap one's mind around. Fear you not, we'll have a look at some
 > sample methods later on; those are pretty straightforward. Believe me when i say **you don't have to pass
-> an exam of the [gritty details of the NodeJS Streams API](http://nodejs.org/api/stream.html) to use
+> an exam on the [gritty details of the NodeJS Streams API](http://nodejs.org/api/stream.html) to use
 > PipeDreams**.
 >
 > For the moment being, it's just important to know that what is passed between line #4
@@ -147,6 +147,27 @@ one record per line of text, splitting into lines is a good preparation for gett
 > does something small / fast / elementary / generic do whatever it receives from above, and passes the result
 > to the next stop in the pipe.
 
+* On **line #6**, we have `P.$sample 1 / 1e4, headers: true` (for non-CS-folks:
+`P.$sample( 1 / 1e4, { headers: true} )`). Let's dissect that one by one:
+
+  * `P`, of course, is simply the
+    result of `P = require 'pipedreams'; i'm not so much into abbreviations, but since this particular reference
+    will appear like *all* over the place, let's make it a snappy one.
+
+  * `$sample` is a method of `P`. I adopt the convention of prefixing all methods that are suitable as an
+    argument to a `pipe` method with `$`. This is to signal that not `sample` itself, but rather its
+    return value should be put into the pipe. When you start to write your own pipes, you will often
+    unadvertently write `input_A.pipe f`, `input_B.pipe f` and you'll have a problem: typically you do not
+    want to share state between two unrelated streams, so each stream must get its unique pipe members.
+    **Your piping functions are all piping function producers**—higher-order functions, that is. The
+    `$` sigil is there to remind you of that: you must call this function in order to get the function
+    you want in the pipe.
+
+  * What does `$sample` do?—From the documentation:
+
+  > Given a `0 <= p <= 1`, interpret `p` as the *p*robability to *p*ick a given record and otherwise toss
+  > it, so that `$sample 1` will keep all records, `$sample 0` will toss all records, and
+  > `$sample 0.5` (the default) will toss every other record.
 
 
 
