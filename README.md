@@ -265,8 +265,8 @@ Now let's dash a little faster across the remaining lines:
     we (**#9**) clean the record of unwanted fields (there are quite a few in the data); then we (**#10**)
     set a field `%gtfs-type` to value `'stop_times'` (the same for all records in the pipeline). Next
     (**#11**) we delete a redundant field name prefix using a PipeDreams method, (**#12**) change all the
-    underscored field names to dashed style, (**#13**) rename a field and then some, (**#17**) we call
-    another custom method to add an ID field and, finally, on **line #18**, we register the record in
+    underscored field names to dashed style, (**#13**) rename a field and then some; we then (**#17**) call
+    a custom method to add an ID field and, finally, on **line #18**, we register the record in
     a registry.
 
 
