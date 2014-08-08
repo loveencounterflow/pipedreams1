@@ -48,8 +48,8 @@ More research revealed two things:
 
 	Have a look at the [`fast-csv` API](http://c2fo.github.io/fast-csv/index.html)
 	to see what i mean: you get a lot of `fastcsv.createWriteStream`, `fastcsv.fromStream` and so on methods.
-	Thing is, **you don't need that stuff to work with streams, and you don't need that stuff to parse
-	CSV files, so those methods are simply superfluous**.
+	Thing is, you don't need that stuff to work with streams, and you don't need that stuff to parse
+	CSV files, so those methods are simply superfluous.
 
 	**A good modern NodeJS CSV parser should be
 	*compatible* with streams, it should *not* replace or emulate NodeJS core streams—that is a violation
