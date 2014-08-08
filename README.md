@@ -156,7 +156,7 @@ one record per line of text, splitting into lines is a good preparation for gett
 > For the moment being, it's just important to know that what is passed between line #4
 > `input = ...` and line #5 `split` are some arbitrarily-sized chunks of binary data which get transformed
 > into chunks of line-sized text and passed into line #6 `sample ...`. The basic idea is that each step
-> does something small / fast / elementary / generic do whatever it receives from above, and passes the result
+> does something small / fast / elementary / generic to whatever it receives from above, and passes the result
 > to the next stop in the pipe.
 
 * On **line #6**, we have `P.$sample 1 / 1e4, headers: true` (for non-CS-folks:
