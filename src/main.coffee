@@ -23,8 +23,6 @@ ES                        = require 'event-stream'
 #...........................................................................................................
 ### http://c2fo.github.io/fast-csv/index.html, https://github.com/C2FO/fast-csv ###
 S                         = require 'string'
-#...........................................................................................................
-through                   = require 'through'
 
 
 #===========================================================================================================
@@ -33,7 +31,7 @@ through                   = require 'through'
 @$                  = ES.map      .bind ES
 @$split             = ES.split    .bind ES
 @$chain             = ES.pipeline .bind ES
-@through            = through     .bind through
+@through            = ES.through  .bind ES
 @create_readstream  = require './create-readstream'
 @eos                = { 'eos': true }
 
@@ -158,7 +156,7 @@ through                   = require 'through'
       @emit 'data', eos       if received_eos
       @emit 'end'
   #.........................................................................................................
-  return through on_data, on_end
+  return ES.through on_data, on_end
 
 #-----------------------------------------------------------------------------------------------------------
 @$collect_sample = ( input_stream, n, options, result_handler ) ->
@@ -227,7 +225,7 @@ through                   = require 'through'
   on_end  = ->
     @emit 'data', signal
     @emit 'end'
-  return through on_data, on_end
+  return ES.through on_data, on_end
 
 #-----------------------------------------------------------------------------------------------------------
 @$on_end = ( handler ) ->
@@ -236,7 +234,7 @@ through                   = require 'through'
     handler null, null
     @emit 'data', signal
     @emit 'end'
-  return through on_data, on_end
+  return ES.through on_data, on_end
 
 
 
@@ -311,7 +309,7 @@ through                   = require 'through'
       @emit 'data', eos if received_eos
       @emit 'end'
   #.........................................................................................................
-  return through on_data, on_end
+  return ES.through on_data, on_end
 
 
 #===========================================================================================================
