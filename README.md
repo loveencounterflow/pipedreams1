@@ -188,6 +188,13 @@ one record per line of text, splitting into lines is a good preparation for gett
     The second argument to `$sample`, `headers: true`, is there to ensure `$sample` won't accidentally
     toss out the CSV header with the field names, as that would damage the data.
 
+> It's already becoming clear that PipeDreams is centered around two things: parsing CSV files, and
+> dealing with big files. This is due to the circumstances leading to its creation. That said, i try
+> to keep it as open and general as to be of use, if only as a template, for other, stream-related
+> purposes.
+
+
+
 
 
 
