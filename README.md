@@ -229,12 +229,12 @@ one record per line of text, splitting into lines is a good preparation for gett
     which makes it clear that `$parse_csv` is a function that returns a function. Incidentally, it also
     keeps some state in its closure, as `field_names` is bound to become a list of names the moment that
     the pipeline hits the first line of the file. This clarifies what we talked about earlier: you do
-    not want to share this state across streams—one stream has one set of CSV headers, another stream
-    another set. This is why it's so important to individualize members of a stream's pipe.
+    not want to share this state across streams—one stream has one set of CSV headers, another stream,
+    another set. That's why it's so important to individualize members of a stream's pipe.
 
     > It's also quite clear that this implementation is both quick and dirty: it assumes the CSV does have
     > headers, that fields are separated by commas, strings may be surrounded by double quotes, and so on.
-    > Those details should really be made configurable, whis hasn't yet happened here. Again, the moment
+    > Those details should really be made configurable, which hasn't yet happened here. Again, the moment
     > you call `P.$parse_csv` would be a perfect moment to fill out those details and get a bespoke
     > method that suits the needs at hand.
 
