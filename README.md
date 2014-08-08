@@ -218,7 +218,7 @@ one record per line of text, splitting into lines is a good preparation for gett
     ```
     For pure-JS aficionados, the outline of that is, basically,
 
-    ```js
+    ```javascript
     this.$parse_csv = function() {
       var field_names = null;
       return this.$( function( record, handler ) {
