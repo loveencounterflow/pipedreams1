@@ -59,7 +59,7 @@ S                         = require 'string'
 @$sample = ( p = 0.5, options ) ->
   ### Given a `0 <= p <= 1`, interpret `p` as the *p*robability to *p*ick a given record and otherwise toss
   it, so that `$sample 1` will keep all records, `$sample 0` will toss all records, and
-  `$sample 0.5` (the default) will toss every other record.
+  `$sample 0.5` (the default) will toss (on average) every other record.
 
   You can pipe several `$sample()` calls, reducing the data stream to 50% with each step. If you know
   your data set has, say, 1000 records, you can cut down to a random sample of 10 by piping the result of
