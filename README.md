@@ -29,10 +29,10 @@ package that is widely used by NodeJS projects, and, looking at the `pipe` inter
 very enticing and suitable, so i started using it.
 
 Unfortunately, it so turned out that i kept loosing records from my data. Most blatantly, some data sets
-ended up containing a consistent number of 16384 records, although the sources contain many more records.
-i've since found out that `csv-parse` has some issues related to stream backpressure not being handled
-correctly
-(see my [question on StackOverflow](http://stackoverflow.com/questions/25181441/how-to-work-with-large-files-nodejs-streams-and-pipes)
+ended up containing a consistent number of 16384 records, although the affected sources contain many more
+and each one a different number of records.
+I've since found out that, alas, `csv-parse` has some issues related to stream backpressure not being handled
+correctly (see my [question on StackOverflow](http://stackoverflow.com/questions/25181441/how-to-work-with-large-files-nodejs-streams-and-pipes)
 and the related [issue on GitHub]()).
 
 More research revealed two things:
@@ -57,6 +57,18 @@ More research revealed two things:
 **A good modern NodeJS CSV parser should be
 *compatible* with streams, it should *not* replace or emulate NodeJS core streams—that is a violation
 of the principle of [Separation of Concerns (SoC)](http://en.wikipedia.org/wiki/Separation_of_concerns).**
+
+I nice side effect of this maxime is that the individual functions i write to handle and manipulate got
+simpler upon rejecting solutions that had all the batteries and the streams included in their supposedly
+convenient setups. It's a bit like when you want a new mat to sit on when driving: you'd probably
+prefer that standalone offering over the one that includes all of the upholstering, as that would be
+quite a hassle to get integrated with your existing vehicle. It's maybe no accident that all the solutions
+i found on the websites promoting all-in-one solutions give a *lot* of snippets how you can turn their
+APIs inside-out from piping to event-based to making pancakes, but they never show you a real-world example
+that shows how to integrate those solutions into a long pipeline of data transformations, which is what stream
+pipelines are there for (and excel at).
+
+Scroll down a bit to see a real-world example built with PipeDreams.
 
 ### Overview
 
