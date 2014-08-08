@@ -130,7 +130,27 @@ great because i used to report progress numbers manually, and now i get a better
 `eventstream.split()` and splits whatever is read from the file into (chunks that are) lines. You do not
 want that if you're reading, say, `blockbusters.avi` from the disk, but you certainly want that if you're
 reading `all-instances-where-a-bus-stopped-at-a-bus-stop-in-northeast-germany-in-fall-2014.csv`, which,
-if left unsplit, is an unwieldy *mass* of data.
+if left unsplit, is an unwieldy *mass* of data. As the CSV format mandates an optional header line and
+one record per line of text, splitting into lines is a good preparation for getting closer to the data.
+
+For those who have never worked with streams or piping, observe that we have a pretty declarative interface
+here that does not readily reveal *how* things are done and on *which* arguments. That's great for building
+an abstraction—the code looks a lot like a Table of Contents where actions are just labelled, but not
+described in detail, but it can be hard to wrap one's mind around. Fear you not, we'll have a look at some
+sample methods later on; those are pretty straightforward. Believe when i say **you don't have to pass
+an exam of the [gritty details of the NodeJS Streams API](http://nodejs.org/api/stream.html) to use
+PipeDreams**.
+
+For the moment being, it's just important to know that what is passed between line #4
+`input = ...` and line #5 `split` are some arbitrarily-sized chunks of binary data which get transformed
+into chunks of line-sized text and passed into line #6 `sample ...`. The basic idea is that each step
+does something small / fast / elementary / generic do whatever it receives from above, and passes the result
+to the next stop in the pipe.
+
+
+
+
+
 
 
 
