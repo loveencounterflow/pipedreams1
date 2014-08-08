@@ -65,8 +65,8 @@ prefer that standalone / small / cheap / focused offering over the one that incl
 quite a hassle to get integrated with your existing vehicle. It's maybe no accident that all the solutions
 i found on the websites promoting all-in-one solutions give a *lot* of snippets how you can turn their
 APIs inside-out from piping to event-based to making pancakes, but they never show you a real-world example
-that shows how to integrate those solutions into a long pipeline of data transformations, which is what stream
-pipelines are there for (and excel at).
+that shows how to weave those solutions into a long pipeline of data transformations, which is what stream
+pipelines are there for and excel at.
 
 Scroll down a bit to see a real-world example built with PipeDreams.
 
