@@ -165,7 +165,7 @@ one record per line of text, splitting into lines is a good preparation for gett
 
   * What does `$sample` do?—From the documentation:
 
-  > Given a `0 <= p <= 1`, interpret `p` as the *p*&nbsp;robability to **p**ick a given record and otherwise toss
+  > Given a `0 <= p <= 1`, interpret `p` as the <b>p</b>robability to Pick a given record and otherwise toss
   > it, so that `$sample 1` will keep all records, `$sample 0` will toss all records, and
   > `$sample 0.5` (the default) will toss every other record.
 
