@@ -198,7 +198,7 @@ one record per line of text, splitting into lines is a good preparation for gett
   * On **line #7**, it's `P.$skip_empty()`. Not surprisingly, this step eliminates all empty lines. On
     second thought, that step should appear in front of the call to `$sample`, don't you think?
 
-  * On **line #8**, it's time to `P.$parse_csv()`. For those among who are good at digesting CoffeeScript,
+  * On **line #8**, it's time to `P.$parse_csv()`. For those among us who are good at digesting CoffeeScript,
     here is the implementation; you can see it's indeed quite straightforward:
 
     ```coffee
@@ -216,8 +216,41 @@ one record per line of text, splitting into lines is a good preparation for gett
         record[ field_names[ idx ] ] = value for value, idx in values
         handler null, record
     ```
+    For pure-JS aficionados, the outline of that is, basically,
 
+    ```js
+    this.$parse_csv = function() {
+      var field_names = null;
+      return this.$( function( record, handler ) {
+        ...
+        })
+      }
+    ```
+    which makes it clear that `$parse_csv` is a function that returns a function. Incidentally, it also
+    keeps some state in its closure, as `field_names` is bound to become a list of names the moment that
+    the pipeline hits the first line of the file. This clarifies what we talked about earlier: you do
+    not want to share this state across streams—one stream has one set of CSV headers, another stream
+    another set. This is why it's so important to individualize members of a stream's pipe.
 
+    > It's also quite clear that this implementation is both quick and dirty: it assumes the CSV does have
+    > headers, that fields are separated by commas, strings may be surrounded by double quotes, and so on.
+    > Those details should really be made configurable, whis hasn't yet happened here. Again, the moment
+    > you call `P.$parse_csv` would be a perfect moment to fill out those details and get a bespoke
+    > method that suits the needs at hand.
+
+Now let's dash a little faster across the remaining lines:
+
+  * On **lines #9—#18**,
+    ```coffee
+    .pipe @$clean_stoptime_record()                                       #  9
+    .pipe P.$set                        '%gtfs-type', 'stop_times'        # 10
+    .pipe P.$delete_prefix              'trip_'                           # 11
+    .pipe P.$dasherize_field_names()                                      # 12
+    .pipe P.$rename                     'id',             '%gtfs-trip-id' # 13
+    # ...
+    .pipe @$add_stoptimes_gtfsid()                                        # 17
+    .pipe @$register                    registry                          # 18
+    ```
 
 
 
