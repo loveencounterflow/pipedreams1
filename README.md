@@ -243,8 +243,9 @@ one record per line of text, splitting into lines is a good preparation for gett
     pipe member functions work in essentially this way: they accept whatever they're wont to accept and
     return whatever they see fit.
 
-    > ...which puts a finger on another sore spot, the glaring absence of meaningful type-checking and
+    > ...which puts a finger on another sore spot, the glaring absence of meaningful type checking and
     > error handling in this model function.
+
 
 Now let's dash a little faster across the remaining lines:
 
