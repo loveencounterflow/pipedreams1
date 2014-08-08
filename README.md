@@ -151,12 +151,12 @@ one record per line of text, splitting into lines is a good preparation for gett
 `P.$sample( 1 / 1e4, { headers: true} )`). Let's dissect that one by one:
 
   * `P`, of course, is simply the
-    result of `P = require 'pipedreams'; i'm not so much into abbreviations, but since this particular reference
-    will appear like *all* over the place, let's make it a snappy one.
+    result of `P = require 'pipedreams'`. I'm not much into abbreviations in coding, but since this
+    particular reference will appear, like, *all* over the place, let's make it a snappy one.
 
   * `$sample` is a method of `P`. I adopt the convention of prefixing all methods that are suitable as an
-    argument to a `pipe` method with `$`. This is to signal that not `sample` itself, but rather its
-    return value should be put into the pipe. When you start to write your own pipes, you will often
+    argument to a `pipe` method with `$`. This is to signal that **not `sample` itself, but rather its
+    return value** should be put into the pipe. When you start to write your own pipes, you will often
     unadvertently write `input_A.pipe f`, `input_B.pipe f` and you'll have a problem: typically you do not
     want to share state between two unrelated streams, so each stream must get its unique pipe members.
     **Your piping functions are all piping function producers**—higher-order functions, that is. The
