@@ -117,14 +117,16 @@ read_stop_times = ( registry, route, handler ) ->                         #  3
       return handler null, registry                                       # 21
 ```
 
-What happens here is, roughly: on **line #4**, `input` is a PipeDreams ReadStream object created as `create_readstream route,
+What happens here is, roughly:
+
+* On **line #4**, `input` is a PipeDreams ReadStream object created as `create_readstream route,
 label`. PipeDreams ReadStreams are nothing but what NodeJS gives you with `fs.createReadStream`; they're
 just a bit pimped so you get a [nice progress bar on the console](https://github.com/visionmedia/node-progress)
 which is great because those files can take *minutes* to process completely, and it's nasty to stare at
 a silent command line that doesn't keep you informed what's going on. Having a progress bar pop up is
 great because i used to report progress numbers manually, and now i get a better solution for free.
 
-On **line #5**, we put a `split` operation (as `P.$split()`) into the pipeline, which is just
+* On **line #5**, we put a `split` operation (as `P.$split()`) into the pipeline, which is just
 `eventstream.split()` and splits whatever is read from the file into (chunks that are) lines. You do not
 want that if you're reading, say, `blockbusters.avi` from the disk, but you certainly want that if you're
 reading `all-instances-where-a-bus-stopped-at-a-bus-stop-in-northeast-germany-in-fall-2014.csv`, which,
