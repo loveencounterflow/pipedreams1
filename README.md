@@ -77,7 +77,7 @@ P = require 'pipedreams'                                                  #  1
     .pipe P.$skip_empty()                                                 #  7
     .pipe P.$parse_csv()                                                  #  8
     .pipe @$clean_stoptime_record()                                       #  9
-    .pipe P.$set                        '%gtfs-type', 'stop_times'        # 10
+    .pipe P.$set                        '%gtfs-type',     'stop_times'    # 10
     .pipe P.$delete_prefix              'trip_'                           # 11
     .pipe P.$dasherize_field_names()                                      # 12
     .pipe P.$rename                     'id',             '%gtfs-trip-id' # 13
@@ -103,7 +103,7 @@ read_stop_times = ( registry, route, handler ) ->                         #  3
     | skip_empty()                                                        #  7
     | parse_csv()                                                         #  8
     | clean_stoptime_record()                                             #  9
-    | set                        '%gtfs-type', 'stop_times'               # 10
+    | set                        '%gtfs-type',      'stop_times'          # 10
     | delete_prefix              'trip_'                                  # 11
     | dasherize_field_names()                                             # 12
     | rename                     'id',             '%gtfs-trip-id'        # 13
@@ -238,20 +238,35 @@ one record per line of text, splitting into lines is a good preparation for gett
     > you call `P.$parse_csv` would be a perfect moment to fill out those details and get a bespoke
     > method that suits the needs at hand.
 
+    One more important detail: the `record` that comes into (the function returned by) `$parse_csv` is
+    a line of text; the `record` that goes out of it is a plain old object with named values. All the
+    pipe member functions work in essentially this way: they accept whatever they're wont to accept and
+    return whatever they see fit.
+
+    > ...which puts a finger on another sore spot, the glaring absence of meaningful type-checking and
+    > error handling in this model function.
+
 Now let's dash a little faster across the remaining lines:
 
   * On **lines #9—#18**,
+
     ```coffee
     .pipe @$clean_stoptime_record()                                       #  9
     .pipe P.$set                        '%gtfs-type', 'stop_times'        # 10
     .pipe P.$delete_prefix              'trip_'                           # 11
     .pipe P.$dasherize_field_names()                                      # 12
-    .pipe P.$rename                     'id',             '%gtfs-trip-id' # 13
+    .pipe P.$rename                     'id', '%gtfs-trip-id'             # 13
     # ...
     .pipe @$add_stoptimes_gtfsid()                                        # 17
     .pipe @$register                    registry                          # 18
     ```
 
+    we (**#9**) clean the record of unwanted fields (there are quite a few in the data); then we (**#10**)
+    set a field `%gtfs-type` to value `'stop_times'` (the same for all records in the pipeline). Next
+    (**#11**) we delete a redundant field name prefix using a PipeDreams method, (**#12**) change all the
+    underscored field names to dashed style, (**#13**) rename a field and then some, (**#17**) we call
+    another custom method to add an ID field and, finally, on **line #18**, we register the record in
+    a registry.
 
 
 
