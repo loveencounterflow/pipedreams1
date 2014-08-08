@@ -160,8 +160,8 @@ one record per line of text, splitting into lines is a good preparation for gett
     unadvertently write `input_A.pipe f`, `input_B.pipe f` and you'll have a problem: typically you do not
     want to share state between two unrelated streams, so each stream must get its unique pipe members.
     **Your piping functions are all piping function producers**—higher-order functions, that is. The
-    `$` sigil is there to remind you of that: you must call this function in order to get the function
-    you want in the pipe.
+    `$` sigil is there to remind you of that: *$ == 'you must call this function in order to get the function
+    you want in the pipe'*.
 
   * What does `$sample` do?—From the documentation:
 
