@@ -49,8 +49,8 @@ through                   = require 'through'
 @$skip_after = ( limit = 1 ) ->
   count = 0
   return @$ ( record, handler ) =>
-    return handler() if count > limit
     count += 1
+    return handler() if count > limit
     handler null, record
 
 
