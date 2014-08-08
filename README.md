@@ -68,25 +68,25 @@ PipeDreams—as the name implies—is centered around the pipeline model of work
 example is in place:
 
 ```coffee
-@read_stop_times = ( registry, route, handler ) ->
-  input       = P.create_readstream route, 'stop_times'
-  input.pipe P.$split()
-    .pipe P.$sample                     1 / 1e4, headers: true
-    .pipe P.$skip_empty()
-    .pipe P.$parse_csv()
-    .pipe @$clean_stoptime_record()
-    .pipe P.$set                        '%gtfs-type', 'stop_times'
-    .pipe P.$delete_prefix              'trip_'
-    .pipe P.$dasherize_field_names()
-    .pipe P.$rename                     'id',             '%gtfs-trip-id'
-    .pipe P.$rename                     'stop-id',        '%gtfs-stop-id'
-    .pipe P.$rename                     'arrival-time',   'arr'
-    .pipe P.$rename                     'departure-time', 'dep'
-    .pipe @$add_stoptimes_gtfsid()
-    .pipe @$register                    registry
-    .on 'end', ->
-      info 'ok: stoptimes'
-      return handler null, registry
+@read_stop_times = ( registry, route, handler ) ->                        #  1
+  input       = P.create_readstream route, 'stop_times'                   #  2
+  input.pipe P.$split()                                                   #  3
+    .pipe P.$sample                     1 / 1e4, headers: true            #  4
+    .pipe P.$skip_empty()                                                 #  5
+    .pipe P.$parse_csv()                                                  #  6
+    .pipe @$clean_stoptime_record()                                       #  7
+    .pipe P.$set                        '%gtfs-type', 'stop_times'        #  8
+    .pipe P.$delete_prefix              'trip_'                           #  9
+    .pipe P.$dasherize_field_names()                                      # 10
+    .pipe P.$rename                     'id',             '%gtfs-trip-id' # 11
+    .pipe P.$rename                     'stop-id',        '%gtfs-stop-id' # 12
+    .pipe P.$rename                     'arrival-time',   'arr'           # 13
+    .pipe P.$rename                     'departure-time', 'dep'           # 14
+    .pipe @$add_stoptimes_gtfsid()                                        # 15
+    .pipe @$register                    registry                          # 16
+    .on 'end', ->                                                         # 17
+      info 'ok: stoptimes'                                                # 18
+      return handler null, registry                                       # 19
 ```
 
 
