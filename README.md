@@ -186,7 +186,7 @@ one record per line of text, splitting into lines is a good preparation for gett
     customary here; in fact, it means 'whatever you get passed as data when called'. That could be
     a CSV record, a line of text, a number, a list of values, anything. `$sample`, like many PipeDreams
     methods, is fully generic and agnostic. Just as the quote above says, "a stream is just a series of things over time".
-    We've just split a binary stream into lines of text with the previous step, so a 'record' at this
+    In the previous step we `split`ted a binary stream into lines of text, so a 'record' at this
     particular point is just that, a line of text. Move `$sample` two steps downstream, and it'll get to see a
     parsed CSV record instead.
 
