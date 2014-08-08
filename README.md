@@ -198,19 +198,23 @@ one record per line of text, splitting into lines is a good preparation for gett
   * On **line #7**, it's `P.$skip_empty()`. Not surprisingly, this step eliminates all empty lines. On
     second thought, that step should appear in front of the call to `$sample`, don't you think?
 
-  * On **line #8**, it's time to `P.$parse_csv()`.
+  * On **line #8**, it's time to `P.$parse_csv()`. For those among who are good at digesting CoffeeScript,
+    here is the implementation; you can see it's indeed quite straightforward:
 
     ```coffee
+    ### http://stringjs.com/ ###
+    S = require 'string'
+
     @$parse_csv = ->
-    field_names = null
-    return @$ ( record, handler ) =>
-      values = ( S record ).parseCSV ',', '"', '\\'
-      if field_names is null
-        field_names = values
-        return handler()
-      record = {}
-      record[ field_names[ idx ] ] = value for value, idx in values
-      handler null, record
+      field_names = null
+      return @$ ( record, handler ) =>
+        values = ( S record ).parseCSV ',', '"', '\\'
+        if field_names is null
+          field_names = values
+          return handler()
+        record = {}
+        record[ field_names[ idx ] ] = value for value, idx in values
+        handler null, record
     ```
 
 

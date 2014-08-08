@@ -21,7 +21,7 @@ rainbow                   = TRM.rainbow.bind TRM
 ### https://github.com/dominictarr/event-stream ###
 ES                        = require 'event-stream'
 #...........................................................................................................
-### http://c2fo.github.io/fast-csv/index.html, https://github.com/C2FO/fast-csv ###
+### http://stringjs.com ###
 S                         = require 'string'
 
 
