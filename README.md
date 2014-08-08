@@ -65,13 +65,13 @@ PipeDreams is a library that is built on top of Dominic Tarr's great
 working with streams easy".
 
 PipeDreams—as the name implies—is centered around the pipeline model of working with streams. A quick
-example is in place:
+(CoffeeScript) example is in place:
 
 ```coffee
 P = require 'pipedreams'                                                  #  1
                                                                           #  2
 @read_stop_times = ( registry, route, handler ) ->                        #  3
-  input = P.create_readstream route, 'stop_times'                   #  4
+  input = P.create_readstream route, 'stop_times'                         #  4
   input.pipe P.$split()                                                   #  5
     .pipe P.$sample                     1 / 1e4, headers: true            #  6
     .pipe P.$skip_empty()                                                 #  7
@@ -116,4 +116,20 @@ read_stop_times = ( registry, route, handler ) ->                         #  3
       info 'ok: stoptimes'                                                # 20
       return handler null, registry                                       # 21
 ```
+
+What happens here is, roughly: `input` is a PipeDreams ReadStream object created as `create_readstream route,
+label`. PipeDreams ReadStreams are nothing but what NodeJS gives you with `fs.createReadStream`; they're
+just a bit pimped so you get a [nice progress bar on the console](https://github.com/visionmedia/node-progress)
+which is great because those files can take *minutes* to process completely, and it's nasty to stare at
+a silent command line that doesn't keep you informed what's going on. Having a progress bar pop up is
+great because i used to report progress numbers manually, and now i get a better solution for free.
+
+On line #5, we put a `split` operation (as `P.$split()`) into the pipeline, which is just
+`eventstream.split()` and splits whatever is read from the file into (chunks that are) lines. You do not
+want that if you read, say, `blockbusters.avi` from the disk, but you certainly want that if you're
+reading `all-instances-where-a-bus-stopped-at-a-bus-stop-in-northeast-germany-in-fall-2014.csv`, which,
+if left unsplit, is an unwieldy *mass* of data.
+
+
+
 
