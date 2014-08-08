@@ -204,8 +204,7 @@ one record per line of text, splitting into lines is a good preparation for gett
 
 > It's already becoming clear that PipeDreams is centered around two things: parsing CSV files, and
 > dealing with big files. This is due to the circumstances leading to its creation. That said, i try
-> to keep it as open and general as to be of use, if only as a template, for other, stream-related
-> purposes.
+> to keep it as general as possible to be useful for other use-cases that can profit from streams.
 
   * On **line #7**, it's `P.$skip_empty()`. Not surprisingly, this step eliminates all empty lines. On
     second thought, that step should appear in front of the call to `$sample`, don't you think?
