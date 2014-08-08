@@ -99,7 +99,7 @@ through                   = require 'through'
   be a subset of a sample with a bigger `p` and vice versa (provided seed and delta were constant). ###
   #.........................................................................................................
   unless 0 <= p <= 1
-    throw new Error "need a probability between 0 and 1, got rpr #{p}"
+    throw new Error "expected a number between 0 and 1, got #{rpr p}"
   #.........................................................................................................
   headers = options?[ 'headers'     ] ? false
   seed    = options?[ 'seed'        ] ? null
@@ -116,24 +116,9 @@ through                   = require 'through'
 #===========================================================================================================
 # COLLECTING
 #-----------------------------------------------------------------------------------------------------------
-@$collect = ( input_stream, n, result_handler ) ->
-  collector = []
-  input_stream.on 'end', =>
-    result_handler null, collector if collector.length > 0
-    result_handler null, null
-  #.........................................................................................................
-  return @$ ( record, handler ) ->
-    collector.push record
-    #.......................................................................................................
-    if collector.length >= n
-      result_handler null, collector
-      collector = []
-    #.......................................................................................................
-    handler null, collector
-
-#-----------------------------------------------------------------------------------------------------------
 @$batch = ( n, handler ) ->
   ### TAINT check for meaningful n ###
+  ### TAINT make signal configurable ###
   collector     = []
   received_eos  = false
   eos           = @eos
@@ -223,7 +208,7 @@ through                   = require 'through'
         collector.push record
       else
         p = n / m
-        if rnd_pick() >= p
+        if rnd_pick() < p
           collector[ get_random_integer rnd_idx, 0, n - 1 ] = record
     #.......................................................................................................
     handler null, record
@@ -246,6 +231,7 @@ through                   = require 'through'
 @$on_end = ( handler ) ->
   on_data = null
   on_end  = ->
+    handler null, null
     @emit 'data', signal
     @emit 'end'
   return through on_data, on_end
@@ -280,24 +266,50 @@ through                   = require 'through'
     handler null, record
 
 #-----------------------------------------------------------------------------------------------------------
-@$show_sample = ( input_stream ) ->
-  ### TAINT may introduce a memory leak. ###
-  records = []
-  input_stream.once 'end', =>
-    whisper '©5r0', "displaying random record out of #{records.length}"
-    debug   '©5r0', rpr records[ Math.floor Math.random() * records.length ]
-  return @$ ( record, handler ) =>
-    records.push record
-    handler null, record
+@$count = ( handler ) ->
+  ### TAINT make signal configurable ###
+  ### Given an optional `handler`, issue a count of records upon stream completion.
 
-#-----------------------------------------------------------------------------------------------------------
-@$count = ( input_stream, title ) ->
-  count = 0
-  input_stream.on 'end', ->
-    urge ( title ? 'Count' ) + ':', count
-  return @$ ( record, handler ) =>
-    count += 1
-    handler null, record
+  When a handler is given, then it is called the NodeJS way as `handler null, count`; all records are passed
+  through untouched and may be consumed by downstream transformers.
+
+  Conversely, when no handler is given, then `$count` acts as an aggregator: all records are silently
+  tossed, and the only item left in the pipe is the count.
+
+  In any event, if a PipeDreams End-Of-Stream value is detected in the pipe, it is passed through and not
+  counted; when `$count` is called without a handler, then the EOS will be sent *after* the count. ###
+  eos           = @eos
+  received_eos  = false
+  count         = 0
+  #.........................................................................................................
+  if handler?
+    #.......................................................................................................
+    on_data = ( record ) ->
+      if record is eos
+        received_eos = true
+      else
+        count += 1
+        @emit 'data', record
+    #.......................................................................................................
+    on_end = ->
+      handler null, count
+      @emit 'data', eos if received_eos
+      @emit 'end'
+  #.........................................................................................................
+  else
+    #.......................................................................................................
+    on_data = ( record ) ->
+      if record is eos
+        received_eos = true
+      else
+        count += 1
+    #.......................................................................................................
+    on_end = ->
+      @emit 'data', count
+      @emit 'data', eos if received_eos
+      @emit 'end'
+  #.........................................................................................................
+  return through on_data, on_end
 
 
 #===========================================================================================================
