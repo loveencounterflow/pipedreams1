@@ -38,7 +38,7 @@ and the related [issue on GitHub]()).
 More research revealed two things:
 
 * NodeJS streams *can* be difficult to grasp. They're new, they're hot, they're much talked about but
-  also somewhat underdocumented, their API is just shy of being convoluted. Streams are so hard to
+  also somewhat underdocumented, and their API is just shy of being convoluted. Streams are so hard to
   get right the NodeJS team saw it fit to introduce a second major version in 0.10.x—although
   streams had been part of NodeJS from very early on.
 
@@ -54,9 +54,9 @@ More research revealed two things:
   Thing is, you don't need that stuff to work with streams, and you don't need that stuff to parse
   CSV files, so those methods are simply superfluous.
 
-  **A good modern NodeJS CSV parser should be
-  *compatible* with streams, it should *not* replace or emulate NodeJS core streams—that is a violation
-  of the principle of [Separation of Concerns (SoC)](http://en.wikipedia.org/wiki/Separation_of_concerns).**
+**A good modern NodeJS CSV parser should be
+*compatible* with streams, it should *not* replace or emulate NodeJS core streams—that is a violation
+of the principle of [Separation of Concerns (SoC)](http://en.wikipedia.org/wiki/Separation_of_concerns).**
 
 ### Overview
 
@@ -68,25 +68,52 @@ PipeDreams—as the name implies—is centered around the pipeline model of work
 example is in place:
 
 ```coffee
-@read_stop_times = ( registry, route, handler ) ->                        #  1
-  input       = P.create_readstream route, 'stop_times'                   #  2
-  input.pipe P.$split()                                                   #  3
-    .pipe P.$sample                     1 / 1e4, headers: true            #  4
-    .pipe P.$skip_empty()                                                 #  5
-    .pipe P.$parse_csv()                                                  #  6
-    .pipe @$clean_stoptime_record()                                       #  7
-    .pipe P.$set                        '%gtfs-type', 'stop_times'        #  8
-    .pipe P.$delete_prefix              'trip_'                           #  9
-    .pipe P.$dasherize_field_names()                                      # 10
-    .pipe P.$rename                     'id',             '%gtfs-trip-id' # 11
-    .pipe P.$rename                     'stop-id',        '%gtfs-stop-id' # 12
-    .pipe P.$rename                     'arrival-time',   'arr'           # 13
-    .pipe P.$rename                     'departure-time', 'dep'           # 14
-    .pipe @$add_stoptimes_gtfsid()                                        # 15
-    .pipe @$register                    registry                          # 16
-    .on 'end', ->                                                         # 17
-      info 'ok: stoptimes'                                                # 18
-      return handler null, registry                                       # 19
+P = require 'pipedreams'                                                  #  1
+                                                                          #  2
+@read_stop_times = ( registry, route, handler ) ->                        #  3
+  input = P.create_readstream route, 'stop_times'                   #  4
+  input.pipe P.$split()                                                   #  5
+    .pipe P.$sample                     1 / 1e4, headers: true            #  6
+    .pipe P.$skip_empty()                                                 #  7
+    .pipe P.$parse_csv()                                                  #  8
+    .pipe @$clean_stoptime_record()                                       #  9
+    .pipe P.$set                        '%gtfs-type', 'stop_times'        # 10
+    .pipe P.$delete_prefix              'trip_'                           # 11
+    .pipe P.$dasherize_field_names()                                      # 12
+    .pipe P.$rename                     'id',             '%gtfs-trip-id' # 13
+    .pipe P.$rename                     'stop-id',        '%gtfs-stop-id' # 14
+    .pipe P.$rename                     'arrival-time',   'arr'           # 15
+    .pipe P.$rename                     'departure-time', 'dep'           # 16
+    .pipe @$add_stoptimes_gtfsid()                                        # 17
+    .pipe @$register                    registry                          # 18
+    .on 'end', ->                                                         # 19
+      info 'ok: stoptimes'                                                # 20
+      return handler null, registry                                       # 21
 ```
 
+i agree that there's a bit of line noise here, so let's rewrite that piece in cleaned-up pseudo-code:
+
+```coffee
+P = require 'pipedreams'                                                  #  1
+                                                                          #  2
+read_stop_times = ( registry, route, handler ) ->                         #  3
+  input = create_readstream route, 'stop_times'                           #  4
+    | split()                                                             #  5
+    | sample                     1 / 1e4, headers: true                   #  6
+    | skip_empty()                                                        #  7
+    | parse_csv()                                                         #  8
+    | clean_stoptime_record()                                             #  9
+    | set                        '%gtfs-type', 'stop_times'               # 10
+    | delete_prefix              'trip_'                                  # 11
+    | dasherize_field_names()                                             # 12
+    | rename                     'id',             '%gtfs-trip-id'        # 13
+    | rename                     'stop-id',        '%gtfs-stop-id'        # 14
+    | rename                     'arrival-time',   'arr'                  # 15
+    | rename                     'departure-time', 'dep'                  # 16
+    | add_stoptimes_gtfsid()                                              # 17
+    | register                    registry                                # 18
+    .on 'end', ->                                                         # 19
+      info 'ok: stoptimes'                                                # 20
+      return handler null, registry                                       # 21
+```
 
