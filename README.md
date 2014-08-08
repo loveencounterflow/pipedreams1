@@ -55,13 +55,13 @@ More research revealed two things:
   CSV files, so those methods are simply superfluous.
 
 **A good modern NodeJS CSV parser should be
-*compatible* with streams, it should *not* replace or emulate NodeJS core streams—that is a violation
+*compatible* with streams, it should *not replace* or emulate NodeJS core streams—that is a violation
 of the principle of [Separation of Concerns (SoC)](http://en.wikipedia.org/wiki/Separation_of_concerns).**
 
-I nice side effect of this maxime is that the individual functions i write to handle and manipulate got
+A nice side effect of this maxime is that the individual functions i write to handle and manipulate got
 simpler upon rejecting solutions that had all the batteries and the streams included in their supposedly
 convenient setups. It's a bit like when you want a new mat to sit on when driving: you'd probably
-prefer that standalone offering over the one that includes all of the upholstering, as that would be
+prefer that standalone / small / cheap / focused offering over the one that includes all of the upholstering, as that would be
 quite a hassle to get integrated with your existing vehicle. It's maybe no accident that all the solutions
 i found on the websites promoting all-in-one solutions give a *lot* of snippets how you can turn their
 APIs inside-out from piping to event-based to making pancakes, but they never show you a real-world example
