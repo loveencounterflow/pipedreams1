@@ -169,18 +169,20 @@ one record per line of text, splitting into lines is a good preparation for gett
     > it, so that `$sample 1` will keep all records, `$sample 0` will toss all records, and
     > `$sample 0.5` (the default) will toss (on average) every other record.
 
-    In other words, the argument `1 / 1e4` just signals: pick one out of 10'000 records, toss (delete / skip
+    In other words, the argument `1 / 1e4` signals: pick one out of 10'000 records, toss (delete / skip
     / omit / forget / drop / ignore, you get the idea) everything else. The use of the word 'record' is
     customary here; in fact, it means 'whatever you get passed as data when called'. That could be
     a CSV record, a line of text, a number, a list of values, anything. `$sample`, like many PipeDreams
     methods, is fully generic and agnostic. Just as the quote above says, "a stream is just a series of things over time".
-    We've just split a binary stream into lines of text with the previous step, so a 'record' here is
-    just that, a line of text. Move `$sample` downstream, and it'll get to see a parsed CSV record.
+    We've just split a binary stream into lines of text with the previous step, so a 'record' at this
+    particular point is just that, a line of text. Move `$sample` two steps downstream, and it'll get to see a
+    parsed CSV record instead.
 
     Now the file that is being read here happens to contain 3'722'578 records, and this is why there's that
-    `$sample` command: to fully process every single record takes minutes, which is tedious for
-    testing. When a record is tossed, none of the ensuing pipe methods get anything to work on, so minutes
-    can be reduced to seconds. Of course, you do not get the full amount of data, but you do get to work
+    `$sample` command (and why it is place in front of the actual CSV parsing): to fully process every
+    single record takes minutes, which is tedious for
+    testing. When a record is tossed, none of the ensuing pipe methods get anything to work on; this
+    reduces minutes of processing to seconds. Of course, you do not get the full amount of data, but you do get to work
     on a representative sample, which is invaluable for developing (you can even make it so that the
     random sample stays the *same* across runs, which can also be important).—You probably want to make
     the current ratio (here: `1 / 1e4`) a configuration variable that is set to `1` in production.
@@ -193,7 +195,23 @@ one record per line of text, splitting into lines is a good preparation for gett
 > to keep it as open and general as to be of use, if only as a template, for other, stream-related
 > purposes.
 
+  * On **line #7**, it's `P.$skip_empty()`. Not surprisingly, this step eliminates all empty lines. On
+    second thought, that step should appear in front of the call to `$sample`, don't you think?
 
+  * On **line #8**, it's time to `P.$parse_csv()`.
+
+    ```coffee
+    @$parse_csv = ->
+    field_names = null
+    return @$ ( record, handler ) =>
+      values = ( S record ).parseCSV ',', '"', '\\'
+      if field_names is null
+        field_names = values
+        return handler()
+      record = {}
+      record[ field_names[ idx ] ] = value for value, idx in values
+      handler null, record
+    ```
 
 
 
