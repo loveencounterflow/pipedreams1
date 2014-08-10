@@ -252,7 +252,7 @@ one record per line of text, splitting into lines is a good preparation for gett
     One more important detail: the `record` that comes into (the function returned by) `$parse_csv` is
     a line of text; the `record` that goes out of it is a plain old object with named values. All the
     pipe member functions work in essentially this way: they accept whatever they're wont to accept and
-    return whatever they see fit.
+    pass on whatever they see fit.
 
     > ...which puts a finger on another sore spot, the glaring absence of meaningful type checking and
     > error handling in this model function.

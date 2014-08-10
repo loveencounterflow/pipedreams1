@@ -28,11 +28,14 @@ S                         = require 'string'
 #===========================================================================================================
 # GENERIC METHODS
 #-----------------------------------------------------------------------------------------------------------
+@create_readstream  = require './create-readstream'
 @$                  = ES.map      .bind ES
+@map                = ES.mapSync  .bind ES
 @$split             = ES.split    .bind ES
 @$chain             = ES.pipeline .bind ES
 @through            = ES.through  .bind ES
-@create_readstream  = require './create-readstream'
+@as_readable        = ES.readable .bind ES
+@read_list          = ES.readArray.bind ES
 @eos                = { 'eos': true }
 
 
@@ -183,7 +186,7 @@ S                         = require 'string'
       headers         = options[ 'headers'  ] ? false
       seed            = options[ 'seed'     ] ? null
     else
-      throw new Error "expected 2 or 3 arguments, got #{arity}"
+      throw new Error "expected 3 or 4 arguments, got #{arity}"
   #.........................................................................................................
   if n <= 0 or n != Math.floor n
     throw new Error "expected a positive non-zero integer, got #{n}"
@@ -235,6 +238,31 @@ S                         = require 'string'
     @emit 'data', signal
     @emit 'end'
   return ES.through on_data, on_end
+
+
+
+#===========================================================================================================
+# OBJECT CONVERSION
+#-----------------------------------------------------------------------------------------------------------
+@read_keys = ( x ) ->
+  return @as_readable ( count, handler ) ->
+    for key of x
+      handler null, key
+    @emit 'end'
+
+#-----------------------------------------------------------------------------------------------------------
+@read_values = ( x ) ->
+  return @as_readable ( count, handler ) ->
+    for _, value of x
+      handler null, value
+    @emit 'end'
+
+#-----------------------------------------------------------------------------------------------------------
+@read_facets = ( x ) ->
+  return @as_readable ( count, handler ) ->
+    for key, value of x
+      handler null, [ key, value, ]
+    @emit 'end'
 
 
 
