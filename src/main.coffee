@@ -244,25 +244,35 @@ S                         = require 'string'
 #===========================================================================================================
 # OBJECT CONVERSION
 #-----------------------------------------------------------------------------------------------------------
-@read_keys = ( x ) ->
-  return @as_readable ( count, handler ) ->
-    for key of x
-      handler null, key
-    @emit 'end'
+@$value_from_key = ( x ) ->
+  return @$ ( key, handler ) ->
+    handler null, x[ key ]
 
 #-----------------------------------------------------------------------------------------------------------
-@read_values = ( x ) ->
-  return @as_readable ( count, handler ) ->
-    for _, value of x
-      handler null, value
-    @emit 'end'
+@$read_values = ( x ) ->
+  ### TAINT produces an intermediate list of object keys ###
+  return @$chain ( @read_list Object.keys x ), ( @$value_from_key x )
 
-#-----------------------------------------------------------------------------------------------------------
-@read_facets = ( x ) ->
-  return @as_readable ( count, handler ) ->
-    for key, value of x
-      handler null, [ key, value, ]
-    @emit 'end'
+# #-----------------------------------------------------------------------------------------------------------
+# @read_keys = ( x ) ->
+#   return @as_readable ( count, handler ) ->
+#     for key of x
+#       handler null, key
+#     @emit 'end'
+
+# #-----------------------------------------------------------------------------------------------------------
+# @read_values = ( x ) ->
+#   return @as_readable ( count, handler ) ->
+#     for _, value of x
+#       handler null, value
+#     @emit 'end'
+
+# #-----------------------------------------------------------------------------------------------------------
+# @read_facets = ( x ) ->
+#   return @as_readable ( count, handler ) ->
+#     for key, value of x
+#       handler null, [ key, value, ]
+#     @emit 'end'
 
 
 
