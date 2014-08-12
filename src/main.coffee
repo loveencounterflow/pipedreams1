@@ -162,7 +162,7 @@ S                         = require 'string'
   return ES.through on_data, on_end
 
 #-----------------------------------------------------------------------------------------------------------
-@$collect_sample = ( input_stream, n, options, result_handler ) ->
+@$collect_sample = ( n, options, result_handler ) ->
   ### Given an `input_stream`, a positive integer number `n`, (facultatively) options, and a `handler`, try
   to assemble a representative sample with up to `n` records from the stream. When the stream has ended,
   the handler is called once with (a `null` error argument and) a list of records.
@@ -178,15 +178,15 @@ S                         = require 'string'
   of unknown size has been kindly provided by two guys on
   [Math StackExchange](http://math.stackexchange.com/q/890272/168522). ###
   switch arity = arguments.length
-    when 3
+    when 2
       result_handler  = options
       headers         = false
       seed            = null
-    when 4
+    when 3
       headers         = options[ 'headers'  ] ? false
       seed            = options[ 'seed'     ] ? null
     else
-      throw new Error "expected 3 or 4 arguments, got #{arity}"
+      throw new Error "expected 2 or 3 arguments, got #{arity}"
   #.........................................................................................................
   if n <= 0 or n != Math.floor n
     throw new Error "expected a positive non-zero integer, got #{n}"
@@ -198,9 +198,7 @@ S                         = require 'string'
   rnd_idx   = rnd_from_seed seed
   collector = []
   #.........................................................................................................
-  input_stream.once 'end', => result_handler null, collector
-  #.........................................................................................................
-  return @$ ( record, handler ) =>
+  on_data = ( record ) ->
     ### thx to http://math.stackexchange.com/a/890284/168522,
     http://math.stackexchange.com/a/890285/168522 ###
     idx += 1
@@ -214,7 +212,13 @@ S                         = require 'string'
         if rnd_pick() < p
           collector[ get_random_integer rnd_idx, 0, n - 1 ] = record
     #.......................................................................................................
-    handler null, record
+    @emit 'data', record
+  #.........................................................................................................
+  on_end = ->
+    result_handler null, collector
+    @emit 'end'
+  #.........................................................................................................
+  return ES.through on_data, on_end
 
 
 #===========================================================================================================
@@ -232,12 +236,10 @@ S                         = require 'string'
 
 #-----------------------------------------------------------------------------------------------------------
 @$on_end = ( handler ) ->
-  on_data = null
-  on_end  = ->
+  on_end = ->
     handler null, null
-    @emit 'data', signal
     @emit 'end'
-  return ES.through on_data, on_end
+  return ES.through null, on_end
 
 
 
@@ -282,7 +284,7 @@ S                         = require 'string'
 @$show_and_quit = ->
   return @$ ( record, handler ) =>
     info rpr record
-    warn 'aborting from `TRANSFORMERS.show_and_quit`'
+    warn 'aborting from `PIPEDREAMS.show_and_quit`'
     setImmediate -> process.exit()
     handler null, record
 
