@@ -23,17 +23,22 @@ ES                        = require 'event-stream'
 #...........................................................................................................
 ### http://stringjs.com ###
 S                         = require 'string'
+#...........................................................................................................
+HELPERS                   = require './HELPERS'
 
 
 #===========================================================================================================
 # GENERIC METHODS
 #-----------------------------------------------------------------------------------------------------------
-@create_readstream  = require './create-readstream'
+@create_readstream  = HELPERS.create_readstream .bind HELPERS
+@pimp_readstream    = HELPERS.pimp_readstream   .bind HELPERS
 @$                  = ES.map      .bind ES
 @map                = ES.mapSync  .bind ES
+@merge              = ES.merge    .bind ES
 @$split             = ES.split    .bind ES
 @$chain             = ES.pipeline .bind ES
 @through            = ES.through  .bind ES
+@duplex             = ES.duplex   .bind ES
 @as_readable        = ES.readable .bind ES
 @read_list          = ES.readArray.bind ES
 @eos                = { 'eos': true }
@@ -98,11 +103,15 @@ S                         = require 'string'
   To obtain predictable samples, use `$sample p, seed: 1234` (with a non-zero number of your choice);
   you will then get the exact same
   sample whenever you re-run your piping application with the same stream and the same seed. An interesting
-  property of the predictable sample is that—everything else being the same— a sample with a smaller `p`
+  property of the predictable sample is that—everything else being the same—a sample with a smaller `p`
   will always be a subset of a sample with a bigger `p` and vice versa. ###
   #.........................................................................................................
   unless 0 <= p <= 1
     throw new Error "expected a number between 0 and 1, got #{rpr p}"
+  #.........................................................................................................
+  ### Handle trivial edge cases faster (hopefully): ###
+  return ( @$ ( record, handler ) => handler null, record ) if p == 1
+  return ( @$ ( record, handler ) => handler()            ) if p == 0
   #.........................................................................................................
   headers = options?[ 'headers'     ] ? false
   seed    = options?[ 'seed'        ] ? null
@@ -454,6 +463,13 @@ S                         = require 'string'
   return @$ ( record, handler ) =>
     record[ field_name ] = field_value
     handler null, record
+
+#-----------------------------------------------------------------------------------------------------------
+@$pick = ( field_name ) ->
+  return @$ ( record, handler ) =>
+    value = record[ field_name ]
+    return handler new Error "field #{rpr field_name} not defined in #{rpr record}" if value is undefined
+    handler null, value
 
 
 #===========================================================================================================

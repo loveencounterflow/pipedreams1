@@ -50,8 +50,11 @@ after                     = ( time_s, f ) -> setTimeout f, time_s * 1000
   else
     R = njs_fs.createReadStream route
   #.........................................................................................................
-  size            = get_filesize route
-  collected_bytes = 0
+  return @pimp_readstream R, ( @_get_filesize route ), label
+
+#-----------------------------------------------------------------------------------------------------------
+@pimp_readstream = ( stream, size, label ) ->
+  count_collector = 0
   bar_is_shown    = no
   is_first_call   = yes
   format          = "[:bar] :percent | :current / #{size} | +:elapseds -:etas #{label ? ''}"
@@ -62,33 +65,29 @@ after                     = ( time_s, f ) -> setTimeout f, time_s * 1000
     complete:   '#'
     incomplete: '—'
   #.........................................................................................................
-  R.on 'data', ( data ) ->
-    collected_bytes += data.length
+  stream.on 'data', ( data ) ->
+    is_buffer = Buffer.isBuffer data
+    if is_buffer then count_collector += data.length
+    else              count_collector += 1
+    #.......................................................................................................
     if bar_is_shown
-      bar.tick if is_first_call then collected_bytes else data.length
+      bar.tick if is_first_call then count_collector else ( if is_buffer then data.length else 1 )
       is_first_call = no
   #.........................................................................................................
   bar   = new ProgressBar format, options
   timer = after 3, -> bar_is_shown = yes
   #.........................................................................................................
-  R.on 'end', -> clearTimeout timer
+  stream.on 'end', -> clearTimeout timer
   # TRM.listen_to_keys key_listener
   #.........................................................................................................
-  return R
-
-# #-----------------------------------------------------------------------------------------------------------
-# key_listener = ( key ) ->
-#   echo() if key is '\u0003'
+  return stream
 
 #-----------------------------------------------------------------------------------------------------------
-get_filesize = ( route ) ->
+@_get_filesize = ( route ) ->
   ### Helper to compute filesize from a single route or a list of routes. ###
   return ( njs_fs.statSync route ).size unless Array.isArray route
   R = 0
-  R += get_filesize partial_route for partial_route in route
+  R += @_get_filesize partial_route for partial_route in route
   return R
 
-
-############################################################################################################
-module.exports = @create_readstream
 
