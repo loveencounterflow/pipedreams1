@@ -1,19 +1,178 @@
 
 
 - [PipeDreams](#pipedreams)
+	- [Highlights](#highlights)
+		- [`P.remit`](#premit)
+			- [The Problem](#the-problem)
+			- [The Solution](#the-solution)
 	- [Motivation](#motivation)
 	- [Overview](#overview)
 
 > **Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
 
 
-## PipeDreams
+# PipeDreams
 
 Common operations for piped NodeJS streams.
 
 `npm install --save pipedreams`
 
-### Motivation
+## Highlights
+
+### `P.remit`
+
+#### The Problem
+
+PipeDreams is a library that is built on top of Dominic Tarr's great
+[event-stream](https://github.com/dominictarr/event-stream), which is "a toolkit to make creating and
+working with streams easy".
+
+Having worked a bit the library and pipes, i soon found out that the dichotomy that exists in `event-stream`
+between `ES.map ( data, handler ) -> ...` and `ES.through on_data, on_end` is causing a lot of source code
+refactorings for me. This is because they work in fundamentally different ways. Let's say you want a data
+tranformer and define, like,
+
+```coffee
+@$transform = ->
+  ### NB the fat arrow implicitly aliases `this` a.k.a. `@`
+  so we still refer to the module or class inside the function ###
+  return ES.map ( data, handler ) =>
+    return handler new Error "can't handle empty string" if data is ''
+    data = @do_some_fancy_stuff data
+    handler null, data
+
+input
+  .pipe $transform()
+  ...
+```
+
+and then discover you'd rather count empty `data` strings and, when the stream is done, emit a single error
+that tells the user how many illegal data items were found (the algorithm as such is nonsense, but in
+lengthy streams it can indeed be very practical to offer a summary of issues than to just stop processing at
+the first problem).
+
+To achieve this goal, you could go and define a module-level counter and another method that you tack to
+`input.on 'end'`. It's much cleaner though to have the counter encapsulated and stay with a single method
+in the pipe. `ES.through` let's you do that, but the above code does need some refactoring. To wit:
+
+```coffee
+@$transform = ->
+  ### we need an alias because `this` a.k.a `@` is not *this* 'this' inside `on_data`... ###
+  do_some_fancy_stuff  = @do_some_fancy_stuff.bind @
+  count               = 0
+  on_data = ( data ) ->
+    if data is ''
+      count += 1
+      return
+    data = do_some_fancy_stuff data
+    @emit 'data', data
+  on_end = ->
+    @emit 'error', new Error "encountered #{count} illegal empty data strings" if count > 0
+    @emit 'end'
+
+input
+  .pipe $transform()
+  ...
+```
+
+This works but after the *n*th time of refactoring code to switch between callback-based and event-based
+methodologies (and remembering that `this` refers to something else inside of `on_data` and `on_end`) i
+set out to write one meta-method to rule them all: PipeDream's `remit`.
+
+#### The Solution
+
+Continuing with the above example, this is what our transformer looks like with 'immediate' error reporting:
+
+```coffee
+@$transform = ->
+  return P.remit ( data, send ) =>
+    return send.error new Error "can't handle empty string" if data is ''
+    data = @do_some_fancy_stuff data
+    send data
+
+input
+  .pipe $transform()
+  ...
+```
+
+Now that's snappy. `remit` expects a method with two or three arguments; in this case, it's got a method
+with two arguments, where the first one represents the current `data` that is being piped, and the second
+one is specifically there to send data or (with `send.error`) errors. Quite neat.
+
+Now one interesting thing about `send` is that *it can be called an arbitrary number of times*, which lifts
+another limitation of doing it with `ES.map ( data, handler ) -> ...` where only a *single* call to
+`handler` is legal. If we wanted to, we could do
+
+```coffee
+@$transform = ->
+  return P.remit ( data, send ) =>
+    return send.error new Error "can't handle empty string" if data is ''
+    send @do_some_fancy_stuff   data
+    send @do_other_fancy_stuff  data
+```
+
+to make several data items out of a single one. If you wanted to silently drop a piece of data, just don't
+call `send`—there's no need to make an 'empty' call `handler()` as you'd have to with `ES.map`.
+
+We promised easier code refactorings, and PipeDreams `remit` delivers. Here's the on-input-end sensitive
+version:
+
+```coffee
+@$transform = ->
+  count = 0
+  return P.remit ( data, send, end ) =>
+    return count += 1 if data is ''
+    data = @do_some_fancy_stuff data
+    send data
+    if end?
+      send.error 'error', new Error "encountered #{count} illegal empty data strings" if count > 0
+      end()
+
+input
+  .pipe $transform()
+  ...
+```
+
+The changes are subtle, quickly done, and do not affect the processing model: (1) add a third argument `end`
+to your transformer function; (2) check for `end?` (JavaScript: `end != null`) to know whether the end
+of the stream has been reached; (3) make sure to actually call `end()` when you're done.
+
+You can still `send` as many data items as you like upon receiving `end`. Also note that, behind the scenes,
+PipeDreams buffers the most recent data item, so you will receive the very last item in the stream *together*
+with a non-empty `end` argument. This is good because you can then do your data processing upfront and
+the `end` event handling in the rear part of your code.
+
+**Caveat** There's just one thing to watch out for: **if the stream is completely empty, `data` will be
+`null` on the first call**. This may become a problem if you're like me and like to use CoffeeScript's
+destructuring assignments, viz.:
+
+```coffee
+@$transform = ->
+  count = 0
+  return P.remit ( [ line_nr, name, street, city, phone, ], send, end ) =>
+    ...
+```
+
+I will possibly address this by passing a special empty object singleton as `data` that will cause
+structured assingment-signatures as this one to fail silently; you'd still be obliged to check whether
+your arguments have values other than `undefined`. In the meantime, if you suspect a stream *could* be empty,
+just use
+
+```coffee
+@$transform = ->
+  count = 0
+  return P.remit ( data, send, end ) =>
+    if data?
+      [ line_nr, name, street, city, phone, ] = data
+      ... process data ...
+    if end?
+      ... finalize ...
+```
+
+and you should be fine.
+
+
+## Motivation
 
 > **a stream is just a series of things over time**. if you were to re-implement your
 > library to use your own stream implementation, you'd end up with an 80% clone
@@ -70,11 +229,7 @@ pipelines are there for and excel at.
 
 Scroll down a bit to see a real-world example built with PipeDreams.
 
-### Overview
-
-PipeDreams is a library that is built on top of Dominic Tarr's great
-[event-stream](https://github.com/dominictarr/event-stream), which is "a toolkit to make creating and
-working with streams easy".
+## Overview
 
 PipeDreams—as the name implies—is centered around the pipeline model of working with streams. A quick
 (CoffeeScript) example is in place:

@@ -44,6 +44,55 @@ HELPERS                   = require './HELPERS'
 @eos                = { 'eos': true }
 
 
+
+#===========================================================================================================
+# DELETION
+#-----------------------------------------------------------------------------------------------------------
+@remit = ( method ) ->
+  send      = null
+  cache     = null
+  on_end    = null
+  #.........................................................................................................
+  get_send = ( self ) ->
+    R = ( data ) ->
+      self.emit 'data', data
+    R.error = ( error ) ->
+      self.emit 'error', error
+    return R
+  #.........................................................................................................
+  switch arity = method.length
+    #.......................................................................................................
+    when 3
+      cache = []
+      #.....................................................................................................
+      on_data = ( data )  ->
+        if cache.length is 0
+          cache[ 0 ] = data
+          return
+        send = get_send @ unless _send?
+        [ cache[ 0 ], data, ] = [ data, cache[ 0 ], ]
+        method data, send, null
+      #.....................................................................................................
+      on_end = ->
+        send  = get_send @ unless _send?
+        end   = => @emit 'end'
+        if cache.length is 0
+          data = null
+        else
+          data = cache[ 0 ]
+        method data, send, end
+    #.......................................................................................................
+    when 2
+      #.....................................................................................................
+      on_data = ( data )  ->
+        send = get_send @ unless _send?
+        method data, send
+    else
+      throw new Error "expected a method with an arity of 2 or 3, got one with an arity of #{arity}"
+  #.........................................................................................................
+  return ES.through on_data, on_end
+
+
 #===========================================================================================================
 # DELETION
 #-----------------------------------------------------------------------------------------------------------
@@ -59,6 +108,18 @@ HELPERS                   = require './HELPERS'
     count += 1
     return handler() if count > limit
     handler null, record
+
+#-----------------------------------------------------------------------------------------------------------
+@$trim = ->
+  return @$ ( line, handler ) =>
+    handler null, line.trim()
+
+#-----------------------------------------------------------------------------------------------------------
+@$skip_comments = ( marker = '#' ) ->
+  ### TAINT does only work after trimming ###
+  return @$ ( line, handler ) =>
+    return handler() if line[ 0 ] is marker
+    handler null, line
 
 
 #===========================================================================================================
@@ -364,16 +425,23 @@ HELPERS                   = require './HELPERS'
 #===========================================================================================================
 # CSV
 #-----------------------------------------------------------------------------------------------------------
-@$parse_csv = ->
+@$parse_csv = ( options ) ->
   field_names = null
+  options    ?= {}
+  headers     = options[ 'headers'    ] ? true
+  delimiter   = options[ 'delimiter'  ] ? ','
+  qualifier   = options[ 'qualifier'  ] ? '"'
+  #.........................................................................................................
   return @$ ( record, handler ) =>
-    values = ( S record ).parseCSV ',', '"', '\\'
-    if field_names is null
-      field_names = values
-      return handler()
-    record = {}
-    record[ field_names[ idx ] ] = value for value, idx in values
-    handler null, record
+    values = ( S record ).parseCSV delimiter, qualifier, '\\'
+    if headers
+      if field_names is null
+        field_names = values
+        return handler()
+      record = {}
+      record[ field_names[ idx ] ] = value for value, idx in values
+      return handler null, record
+    handler null, values
 
 
 #===========================================================================================================
