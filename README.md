@@ -17,6 +17,8 @@ Common operations for piped NodeJS streams.
 
 `npm install --save pipedreams`
 
+**Caveat** Below examples are all written in CoffeeScript.
+
 ## Highlights
 
 ### `P.remit`
@@ -27,10 +29,11 @@ PipeDreams is a library that is built on top of Dominic Tarr's great
 [event-stream](https://github.com/dominictarr/event-stream), which is "a toolkit to make creating and
 working with streams easy".
 
-Having worked a bit the library and pipes, i soon found out that the dichotomy that exists in `event-stream`
-between `ES.map ( data, handler ) -> ...` and `ES.through on_data, on_end` is causing a lot of source code
-refactorings for me. This is because they work in fundamentally different ways. Let's say you want a data
-tranformer and define, like,
+Having worked a bit with `ES` and pipes, i soon found out that the dichotomy that exists in `event-stream`
+(`ES`) between `ES.map ( data, handler ) -> ...` and `ES.through on_data, on_end` is causing a lot of source
+code refactorings for me. This is because they work in fundamentally different ways.
+
+Let's say you want a data tranformer and define, like,
 
 ```coffee
 @$transform = ->
@@ -46,10 +49,9 @@ input
   ...
 ```
 
-and then discover you'd rather count empty `data` strings and, when the stream is done, emit a single error
-that tells the user how many illegal data items were found (the algorithm as such is nonsense, but in
-lengthy streams it can indeed be very practical to offer a summary of issues than to just stop processing at
-the first problem).
+Later on, you discover you'd rather count empty `data` strings and, when the stream is done, emit a single
+error that tells the user how many illegal data items were found (with lengthy streams it can indeed be very
+handy to offer a summary of issues rather than to just stop processing at the very first one).
 
 To achieve this goal, you could go and define a module-level counter and another method that you tack to
 `input.on 'end'`. It's much cleaner though to have the counter encapsulated and stay with a single method
@@ -57,27 +59,40 @@ in the pipe. `ES.through` let's you do that, but the above code does need some r
 
 ```coffee
 @$transform = ->
-  ### we need an alias because `this` a.k.a `@` is not *this* 'this' inside `on_data`... ###
-  do_some_fancy_stuff  = @do_some_fancy_stuff.bind @
+  ### we need an alias because `this` a.k.a `@`
+  is not *this* 'this' inside `on_data`... ###
+  do_some_fancy_stuff = @do_some_fancy_stuff.bind @
   count               = 0
+  #..........................................................................................
   on_data = ( data ) ->
     if data is ''
       count += 1
       return
     data = do_some_fancy_stuff data
     @emit 'data', data
+  #..........................................................................................
   on_end = ->
     @emit 'error', new Error "encountered #{count} illegal empty data strings" if count > 0
     @emit 'end'
+  #..........................................................................................
+  return ES.through on_data, on_end
 
 input
   .pipe $transform()
   ...
 ```
 
-This works but after the *n*th time of refactoring code to switch between callback-based and event-based
-methodologies (and remembering that `this` refers to something else inside of `on_data` and `on_end`) i
-set out to write one meta-method to rule them all: PipeDream's `remit`.
+The differences are plenty:
+
+* we now have two functions instead of one;
+* we have to rewrite `ES.map X` as `ES.through Y, Z`;
+* there is no more `handler` (a.k.a. `callback`);
+* we have to call `@emit` and specify the event type (`data`, `error`, or `end`);
+* 'this' has been re-bound by `ES.through`, much to my chagrin.
+
+The refactored code works, but after the *n* th time switching between callback-based and event-based
+methodologies i became weary of this and set out to write one meta-method to rule them all: PipeDream's
+`remit`.
 
 #### The Solution
 
