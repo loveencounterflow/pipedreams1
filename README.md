@@ -88,7 +88,7 @@ The differences are plenty:
 * we have to rewrite `ES.map X` as `ES.through Y, Z`;
 * there is no more `handler` (a.k.a. `callback`);
 * we have to call `@emit` and specify the event type (`data`, `error`, or `end`);
-* 'this' has been re-bound by `ES.through`, much to my chagrin.
+* `this` has been re-bound by `ES.through`, much to my chagrin.
 
 The refactored code works, but after the *n* th time switching between callback-based and event-based
 methodologies i became weary of this and set out to write one meta-method to rule them all: PipeDream's
@@ -127,7 +127,7 @@ another limitation of doing it with `ES.map ( data, handler ) -> ...` where only
 ```
 
 to make several data items out of a single one. If you wanted to silently drop a piece of data, just don't
-call `send`—there's no need to make an 'empty' call `handler()` as you'd have to with `ES.map`.
+call `send`—there's no need to make an 'empty' call to `handler()` as you'd have to with `ES.map`.
 
 We promised easier code refactorings, and PipeDreams `remit` delivers. Here's the on-input-end sensitive
 version:
@@ -148,17 +148,19 @@ input
   ...
 ```
 
-The changes are subtle, quickly done, and do not affect the processing model: (1) add a third argument `end`
-to your transformer function; (2) check for `end?` (JavaScript: `end != null`) to know whether the end
-of the stream has been reached; (3) make sure to actually call `end()` when you're done.
+The changes are subtle, quickly done, and do not affect the processing model:
+
+* add a third argument `end` to your transformer function;
+* check for `end?` (JavaScript: `end != null`) to know whether the end of the stream has been reached;
+* make sure to actually call `end()` when you're done.
 
 You can still `send` as many data items as you like upon receiving `end`. Also note that, behind the scenes,
-PipeDreams buffers the most recent data item, so you will receive the very last item in the stream *together*
-with a non-empty `end` argument. This is good because you can then do your data processing upfront and
-the `end` event handling in the rear part of your code.
+PipeDreams buffers the most recent data item, so you will receive the very last item in the stream
+*together* with a non-empty `end` argument. This is good because you can then do your data processing
+upfront and the `end` event handling in the rear part of your code.
 
-**Caveat** There's just one thing to watch out for: **if the stream is completely empty, `data` will be
-`null` on the first call**. This may become a problem if you're like me and like to use CoffeeScript's
+**Caveat**: There's one thing to watch out for: **if the stream is completely empty, `data` will be `null`
+on the first call**. This may become a problem if you're like me and like to use CoffeeScript's
 destructuring assignments, viz.:
 
 ```coffee
