@@ -28,6 +28,7 @@
     "combined-stream": "0.0.5",
     "easy-table": "^0.3.0",
     "event-stream": "^3.1.7",
+    "floodgate": "^0.1.2",
     "progress": "^1.1.7",
     "string": "^1.9.1",
     "throttle": "^1.0.3"
