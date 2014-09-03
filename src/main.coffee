@@ -195,15 +195,14 @@ HELPERS                   = require './HELPERS'
     handler()
 
 #-----------------------------------------------------------------------------------------------------------
-@$throttle = ( bytes_per_second ) ->
+@$throttle_bytes = ( bytes_per_second ) ->
   Throttle = require 'throttle'
   return new Throttle bytes_per_second
 
 #-----------------------------------------------------------------------------------------------------------
 @$throttle_items = ( items_per_second ) ->
   new_gate  = require 'floodgate'
-  gate      = floodgate interval: items_per_second
-  return gate
+  return new_gate interval: items_per_second
 
 
 #===========================================================================================================
