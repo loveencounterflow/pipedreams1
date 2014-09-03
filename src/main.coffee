@@ -194,6 +194,10 @@ HELPERS                   = require './HELPERS'
     return handler null, record if ( count is 1 and headers ) or rnd() < p
     handler()
 
+#-----------------------------------------------------------------------------------------------------------
+@$throttle = ( rate_bps ) ->
+  Throttle = require 'throttle'
+  return new Throttle rate_bps
 
 
 #===========================================================================================================
