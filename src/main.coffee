@@ -46,7 +46,7 @@ HELPERS                   = require './HELPERS'
 
 
 #===========================================================================================================
-# DELETION
+# TRANSFORMERS
 #-----------------------------------------------------------------------------------------------------------
 @remit = ( method ) ->
   send      = null
@@ -54,10 +54,9 @@ HELPERS                   = require './HELPERS'
   on_end    = null
   #.........................................................................................................
   get_send = ( self ) ->
-    R = ( data ) ->
-      self.emit 'data', data
-    R.error = ( error ) ->
-      self.emit 'error', error
+    R         = (  data ) -> self.emit 'data',  data
+    R.error   = ( error ) -> self.emit 'error', error
+    R.end     =           -> self.emit 'end'
     return R
   #.........................................................................................................
   switch arity = method.length
@@ -69,12 +68,12 @@ HELPERS                   = require './HELPERS'
         if cache.length is 0
           cache[ 0 ] = data
           return
-        send = get_send @ unless _send?
+        send = get_send @ unless send?
         [ cache[ 0 ], data, ] = [ data, cache[ 0 ], ]
         method data, send, null
       #.....................................................................................................
       on_end = ->
-        send  = get_send @ unless _send?
+        send  = get_send @ unless send?
         end   = => @emit 'end'
         if cache.length is 0
           data = null
@@ -85,7 +84,7 @@ HELPERS                   = require './HELPERS'
     when 2
       #.....................................................................................................
       on_data = ( data )  ->
-        send = get_send @ unless _send?
+        send = get_send @ unless send?
         method data, send
     else
       throw new Error "expected a method with an arity of 2 or 3, got one with an arity of #{arity}"
@@ -110,6 +109,9 @@ HELPERS                   = require './HELPERS'
     handler null, record
 
 #-----------------------------------------------------------------------------------------------------------
+# @$stop = -> @remit ( data, send ) -> send.end()
+
+#-----------------------------------------------------------------------------------------------------------
 @$trim = ->
   return @$ ( line, handler ) =>
     handler null, line.trim()
@@ -119,6 +121,14 @@ HELPERS                   = require './HELPERS'
   ### TAINT does only work after trimming ###
   return @$ ( line, handler ) =>
     return handler() if line[ 0 ] is marker
+    handler null, line
+
+#-----------------------------------------------------------------------------------------------------------
+@$skip_comments_2 = ->
+  ### TAINT makeshift method awaiting a better solution ###
+  matcher = /^\s*#/
+  return @$ ( line, handler ) =>
+    return handler() if matcher.test line
     handler null, line
 
 

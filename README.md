@@ -23,6 +23,18 @@ Common operations for piped NodeJS streams.
 
 ### `P.remit`
 
+PipeDreams' `remit` method is my personal favorite to define pipe transformations. With `P.remit` you can
+
+* reject unwanted data items in the stream;
+* replace or modify data items;
+* add new data items;
+* send errors;
+* optionally, determine the end of the stream (at the time when you are looking at the last data item in the
+  stream).
+
+The versatility and easy of use make `remit` a good replacement for both the `map` and the `through` methods
+of `event-stream`. Let's have a look at some examples to demonstrate both points.
+
 #### The Problem
 
 PipeDreams is a library that is built on top of Dominic Tarr's great
@@ -152,14 +164,14 @@ The changes are subtle, quickly done, and do not affect the processing model:
 
 * add a third argument `end` to your transformer function;
 * check for `end?` (JavaScript: `end != null`) to know whether the end of the stream has been reached;
-* make sure to actually call `end()` when you're done.
+* make sure you actually do call `end()` when you're done.
 
 You can still `send` as many data items as you like upon receiving `end`. Also note that, behind the scenes,
 PipeDreams buffers the most recent data item, so you will receive the very last item in the stream
 *together* with a non-empty `end` argument. This is good because you can then do your data processing
 upfront and the `end` event handling in the rear part of your code.
 
-**Caveat**: There's one thing to watch out for: **if the stream is completely empty, `data` will be `null`
+**Caveat 1**: There's one thing to watch out for: **if the stream is completely empty, `data` will be `null`
 on the first call**. This may become a problem if you're like me and like to use CoffeeScript's
 destructuring assignments, viz.:
 
@@ -188,6 +200,36 @@ just use
 
 and you should be fine.
 
+**Caveat 2**: Can you spot what's wrong with this code?:
+
+```coffee
+@$count_good_beans_toss_bad_ones = ->
+  good_bean_count = 0
+  return P.remit ( bean, send, end ) =>
+    return if bean isnt 'good'
+    good_bean_count += 1
+    send bean
+    if end?
+      "we have #{good_bean_count} good beans!"
+      end()
+```
+
+This source code has (almost) all of the features of an orderly written `remit` method, yet it will
+sometimes fail silently—but only if the very last bean is not a good one. The reason is the premature
+`return` statement which in that case prevents the `if end?` clause from ever being reached. **Avoid
+premature `return` statements in `remit` methods**. This code fixes the issue:
+
+```coffee
+@$count_good_beans_toss_bad_ones = ->
+  good_bean_count = 0
+  return P.remit ( bean, send, end ) =>
+    if bean is 'good'
+      good_bean_count += 1
+      send bean
+    if end?
+      "we have #{good_bean_count} good beans!"
+      end()
+```
 
 ## Motivation
 
