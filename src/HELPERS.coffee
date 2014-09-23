@@ -23,6 +23,8 @@ ProgressBar               = require 'progress'
 # CombinedStream            = require 'combined-stream'
 #...........................................................................................................
 after                     = ( time_s, f ) -> setTimeout f, time_s * 1000
+@StringReader             = require './pronto_lib_streams_stringreader.js'
+
 
 #-----------------------------------------------------------------------------------------------------------
 @create_readstream = ( route, label ) ->
@@ -51,6 +53,20 @@ after                     = ( time_s, f ) -> setTimeout f, time_s * 1000
     R = njs_fs.createReadStream route
   #.........................................................................................................
   return @pimp_readstream R, ( @_get_filesize route ), label
+
+#-----------------------------------------------------------------------------------------------------------
+@create_readstream.from_text = ( text, autoresume = false ) ->
+  ### Given a `text`, return a paused stream that will, when resumed, emit the string contents. When a
+  second, truthy argument is given, the stream will be auto-resumed, but only on next tick, so there's time
+  to attach listeners to the stream before it starts emitting. The default is to return a paused stream so
+  you get a chance to pass the stream around to other consumers. — Consider to write
+
+      P.resume P.create_readstream.from_text 'helo'
+
+  instead of passing `true` for better readability. ###
+  R = new @StringReader text
+  ( setImmediate -> R.resume() ) if autoresume
+  return R
 
 #-----------------------------------------------------------------------------------------------------------
 @pimp_readstream = ( stream, size, label ) ->

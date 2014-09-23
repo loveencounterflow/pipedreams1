@@ -3,6 +3,7 @@
 ############################################################################################################
 njs_util                  = require 'util'
 #...........................................................................................................
+TYPES                     = require 'coffeenode-types'
 TEXT                      = require 'coffeenode-text'
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
@@ -25,24 +26,85 @@ ES                        = require 'event-stream'
 S                         = require 'string'
 #...........................................................................................................
 HELPERS                   = require './HELPERS'
+#...........................................................................................................
+### https://github.com/loveencounterflow/copypaste ###
+COPYPASTE                 = require 'copypaste'
 
 
 #===========================================================================================================
 # GENERIC METHODS
 #-----------------------------------------------------------------------------------------------------------
-@create_readstream  = HELPERS.create_readstream .bind HELPERS
-@pimp_readstream    = HELPERS.pimp_readstream   .bind HELPERS
-@$                  = ES.map      .bind ES
-@map                = ES.mapSync  .bind ES
-@merge              = ES.merge    .bind ES
-@$split             = ES.split    .bind ES
-@$chain             = ES.pipeline .bind ES
-@through            = ES.through  .bind ES
-@duplex             = ES.duplex   .bind ES
-@as_readable        = ES.readable .bind ES
-@read_list          = ES.readArray.bind ES
-@eos                = { 'eos': true }
+@create_readstream            = HELPERS.create_readstream             .bind HELPERS
+@create_readstream.from_text  = HELPERS.create_readstream.from_text   .bind HELPERS
+@pimp_readstream              = HELPERS.pimp_readstream               .bind HELPERS
+@$                            = ES.map                                .bind ES
+@map                          = ES.mapSync                            .bind ES
+@merge                        = ES.merge                              .bind ES
+@$split                       = ES.split                              .bind ES
+@$chain                       = ES.pipeline                           .bind ES
+@through                      = ES.through                            .bind ES
+@duplex                       = ES.duplex                             .bind ES
+@as_readable                  = ES.readable                           .bind ES
+@read_list                    = ES.readArray                          .bind ES
+@eos                          = { 'eos': true }
 
+
+
+#===========================================================================================================
+#
+#-----------------------------------------------------------------------------------------------------------
+@resume = ( stream ) ->
+  setImmediate -> stream.resume()
+  return stream
+
+#-----------------------------------------------------------------------------------------------------------
+@$comment = ( message, valediction ) ->
+  message_shown = no
+  return @remit ( data, send, end ) ->
+    unless message_shown
+      help message if message?
+      message_shown = yes
+    send data
+    if end?
+      help valediction if valediction?
+      end()
+
+#===========================================================================================================
+# TRANSFORMERS
+#-----------------------------------------------------------------------------------------------------------
+@create_throughstream = ->
+  R = ES.through()
+  R.setMaxListeners 0
+  return R
+
+
+#===========================================================================================================
+# CLIPBOARD ACCESS
+#-----------------------------------------------------------------------------------------------------------
+@create_clipstream = ( interval_ms = 500 ) ->
+  last_content = null
+  #.........................................................................................................
+  R = @create_throughstream()
+    # .pipe @remit ( content, send ) =>
+    #   debug '©r334', content
+    #   send content
+  #.........................................................................................................
+  capture = =>
+    # debug 'capture'
+    COPYPASTE.paste ( _, content ) =>
+      if content isnt last_content and content.length > 0
+        R.write content
+        last_content = content
+  #.........................................................................................................
+  setInterval capture, interval_ms
+  return R
+
+
+#-----------------------------------------------------------------------------------------------------------
+@echo_clipstream = ( interval_ms ) ->
+  return P.create_clipstream interval_ms
+    .pipe P.remit ( text, send ) =>
+      echo text
 
 
 #===========================================================================================================
@@ -61,10 +123,18 @@ HELPERS                   = require './HELPERS'
   #.........................................................................................................
   switch arity = method.length
     #.......................................................................................................
+    when 2
+      #.....................................................................................................
+      on_data = ( data ) ->
+        # debug '©3w9', send
+        send = get_send @ unless send?
+        method data, send
+    #.......................................................................................................
     when 3
       cache = []
       #.....................................................................................................
-      on_data = ( data )  ->
+      on_data = ( data ) ->
+        # debug '©3w9', send, data
         if cache.length is 0
           cache[ 0 ] = data
           return
@@ -79,18 +149,13 @@ HELPERS                   = require './HELPERS'
           data = null
         else
           data = cache[ 0 ]
+          cache.length = 0
         method data, send, end
     #.......................................................................................................
-    when 2
-      #.....................................................................................................
-      on_data = ( data )  ->
-        send = get_send @ unless send?
-        method data, send
     else
       throw new Error "expected a method with an arity of 2 or 3, got one with an arity of #{arity}"
   #.........................................................................................................
   return ES.through on_data, on_end
-
 
 #===========================================================================================================
 # DELETION
@@ -202,7 +267,7 @@ HELPERS                   = require './HELPERS'
 #-----------------------------------------------------------------------------------------------------------
 @$throttle_items = ( items_per_second ) ->
   new_gate  = require 'floodgate'
-  return new_gate interval: items_per_second
+  return new_gate interval: 1 / items_per_second
 
 
 #===========================================================================================================
@@ -309,6 +374,41 @@ HELPERS                   = require './HELPERS'
   #.........................................................................................................
   return ES.through on_data, on_end
 
+#-----------------------------------------------------------------------------------------------------------
+@$collect = ( handler = null ) ->
+  collector = []
+  return @remit ( record, send, end ) =>
+    collector.push record if record?
+    if end?
+      if handler? then handler null, collector else send collector
+      end()
+
+
+#===========================================================================================================
+# NGRAMS
+#-----------------------------------------------------------------------------------------------------------
+@$ngrams = ( min, max ) ->
+  ### Given two length boundaries `min` and `max`, return a transformer that, when applied to any piece of
+  data that has a `Array`-ish accessor model (i.e. a `length` attribute and numeric elements), will
+  pass on a list `[ record, ngrams, ]`, where `record` is the original data and `ngrams` is a list of
+  all slices of the record with adjacent elements ranging from length `min` to length `max`.  ###
+  return @remit ( record, send ) =>
+    send [ record, @ngrams record, min, max ] if record?
+
+#-----------------------------------------------------------------------------------------------------------
+@ngrams = ( x, min, max ) ->
+  unless ( count = x.length )?
+    throw new Error "unable to find ngrams for value of type #{TYPES.type_of x}"
+  #.........................................................................................................
+  R         = []
+  last_idx  = count - 1
+  if count >= min
+    for d in [ min .. max ]
+      if ( stop = count - d ) >= 0
+        for idx_0 in [ 0 .. count - d ]
+          R.push x[ idx_0 ... idx_0 + d ]
+  return R
+
 
 #===========================================================================================================
 # STREAM END DETECTION
@@ -324,12 +424,16 @@ HELPERS                   = require './HELPERS'
   return ES.through on_data, on_end
 
 #-----------------------------------------------------------------------------------------------------------
-@$on_end = ( handler ) ->
-  on_end = ->
-    handler null, null
-    @emit 'end'
-  return ES.through null, on_end
+@$on_end    = ( method ) -> @$_on_end method, no
+@$catch_end = ( method ) -> @$_on_end method, yes
 
+#-----------------------------------------------------------------------------------------------------------
+@$_on_end = ( method, do_catch = no ) ->
+  return @remit ( data, send, end ) ->
+    send data
+    if end?
+      method send, end
+      end() unless do_catch
 
 
 #===========================================================================================================
@@ -557,6 +661,38 @@ HELPERS                   = require './HELPERS'
     value = record[ field_name ]
     return handler new Error "field #{rpr field_name} not defined in #{rpr record}" if value is undefined
     handler null, value
+
+#-----------------------------------------------------------------------------------------------------------
+@$insert = ( values... ) ->
+  return @remit ( record, send ) =>
+    record.unshift values[ idx ] for idx in [ values.length - 1 .. 0 ] by -1
+    send record
+
+#-----------------------------------------------------------------------------------------------------------
+@$transform = ( transformer ) ->
+  return @remit ( record, send ) =>
+    send new_record unless ( new_record = transformer record ) is undefined
+
+#-----------------------------------------------------------------------------------------------------------
+@$transform_field = ( field_name, transformer ) ->
+  ### Given a `field_name` and a `transformer`, (return a pipeable function with this behavior:) apply
+  `transformer` to each record as `record[ field_name ] = transformer record[ field_name ]`. However,
+  when `transformer` returns `undefined`, then the field is removed from record (using `Array.splice` if
+  `record` is a list). If `record[ field_name ]` happens to be undefined *before* `transformer` is called,
+  and error is passed on instead. ###
+  return @$ ( record, handler ) =>
+    value = record[ field_name ]
+    return handler new Error "field #{rpr field_name} not defined in #{rpr record}" if value is undefined
+    #.......................................................................................................
+    if ( new_value = transformer value ) is undefined
+      if TYPES.isa_list record
+        record.splice field_name, 1
+      else
+        delete record[ field_name ]
+    else
+      record[ field_name ] = new_value
+    #.......................................................................................................
+    handler null, record
 
 
 #===========================================================================================================

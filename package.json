@@ -26,6 +26,7 @@
     "coffeenode-bitsnpieces": "0.0.23",
     "coffeenode-trm": "^0.1.18",
     "combined-stream": "0.0.5",
+    "copypaste": "^0.3.2",
     "easy-table": "^0.3.0",
     "event-stream": "^3.1.7",
     "floodgate": "^0.1.2",
