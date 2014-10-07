@@ -29,13 +29,15 @@ HELPERS                   = require './HELPERS'
 #...........................................................................................................
 ### https://github.com/loveencounterflow/copypaste ###
 COPYPASTE                 = require 'copypaste'
-
+#...........................................................................................................
+### https://github.com/dominictarr/level-live-stream ###
+create_levellivestream    = require 'level-live-stream'
 
 #===========================================================================================================
 # GENERIC METHODS
 #-----------------------------------------------------------------------------------------------------------
 @create_readstream            = HELPERS.create_readstream             .bind HELPERS
-@create_readstream.from_text  = HELPERS.create_readstream.from_text   .bind HELPERS
+@create_readstream_from_text  = HELPERS.create_readstream_from_text   .bind HELPERS
 @pimp_readstream              = HELPERS.pimp_readstream               .bind HELPERS
 @$                            = ES.map                                .bind ES
 @map                          = ES.mapSync                            .bind ES
@@ -69,17 +71,15 @@ COPYPASTE                 = require 'copypaste'
       help valediction if valediction?
       end()
 
+
 #===========================================================================================================
-# TRANSFORMERS
+# SPECIALIZED STREAMS
 #-----------------------------------------------------------------------------------------------------------
 @create_throughstream = ->
   R = ES.through()
   R.setMaxListeners 0
   return R
 
-
-#===========================================================================================================
-# CLIPBOARD ACCESS
 #-----------------------------------------------------------------------------------------------------------
 @create_clipstream = ( interval_ms = 500 ) ->
   last_content = null
@@ -90,22 +90,47 @@ COPYPASTE                 = require 'copypaste'
     #   send content
   #.........................................................................................................
   capture = =>
-    # debug 'capture'
     COPYPASTE.paste ( _, content ) =>
-      if content isnt last_content and content.length > 0
+      if content? and content isnt last_content and content.length > 0
         R.write content
         last_content = content
   #.........................................................................................................
   setInterval capture, interval_ms
   return R
 
-
 #-----------------------------------------------------------------------------------------------------------
 @echo_clipstream = ( interval_ms ) ->
-  return P.create_clipstream interval_ms
-    .pipe P.remit ( text, send ) =>
+  return @create_clipstream interval_ms
+    .pipe @remit ( text, send ) =>
       echo text
 
+#-----------------------------------------------------------------------------------------------------------
+@create_levelstream = ( level_db ) ->
+  R = create_levellivestream level_db
+  # R.setMaxListeners 0
+  return R
+
+
+
+#===========================================================================================================
+# ERROR HANDLING
+#-----------------------------------------------------------------------------------------------------------
+###
+
+Also see https://github.com/juliangruber/multipipe
+
+# thx to http://grokbase.com/t/gg/nodejs/12bwd4zm4x/should-stream-pipe-forward-errors#20121130d5o2xbrhk3llhaxbasu5n374ke
+
+Stream = ( require 'stream' ).Stream
+Stream::pipeErr = (dest, opt) ->
+  fw = dest.emit.bind(dest, "error")
+  @on "error", fw
+  self = this
+  dest.on "unpipe", (src) ->
+    dest.removeListener "error", fw  if src is self
+    return
+  return @pipe dest, opt
+###
 
 #===========================================================================================================
 # TRANSFORMERS
@@ -704,4 +729,3 @@ get_random_integer = ( rnd, min, max ) ->
 #-----------------------------------------------------------------------------------------------------------
 rnd_from_seed = ( seed ) ->
   return if seed? then ( require 'coffeenode-bitsnpieces' ).get_rnd seed else Math.random
-

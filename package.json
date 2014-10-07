@@ -1,6 +1,6 @@
 {
   "name": "pipedreams",
-  "version": "0.0.15",
+  "version": "0.1.0",
   "description": "Common text operations for piped NodeJS streams.",
   "main": "lib/main.js",
   "scripts": {
@@ -30,6 +30,7 @@
     "easy-table": "^0.3.0",
     "event-stream": "^3.1.7",
     "floodgate": "^0.1.2",
+    "level-live-stream": "^1.4.9",
     "progress": "^1.1.7",
     "string": "^1.9.1",
     "throttle": "^1.0.3"
