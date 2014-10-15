@@ -258,8 +258,8 @@ is late to the game when it's ready to pass back the results.
 
 The workaround is to use `remit` with three arguments
 `( data, send, end )`; that way, you 'grab' the `end` token and put everything on hold 'manually', as it
-were. Think of it as the baton in a relay race: you don't hold the baton—anyone could have it a finish the
-race; you hold the baton—you may walk as slowly as you like, and the game won't be over until you cross
+were. Think of it as the baton in a relay race: you don't hold the baton—anyone could have it and finish the
+race. You hold the baton—you may walk as slowly as you like, and the game won't be over until you cross
 the finish or pass the baton.
 
 
