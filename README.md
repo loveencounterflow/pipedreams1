@@ -233,6 +233,8 @@ premature `return` statements in `remit` methods**. This code fixes the issue:
 
 **Caveat 3**: **Always use `end()` with methods that issue asynchronous calls.**
 
+The short:
+
 ```coffee
 @$address_from_name = ->
   return P.remit ( name, send, end ) => # ⬅ ⬅ ⬅ remember to use `end` with async stream transformers
@@ -242,6 +244,16 @@ premature `return` statements in `remit` methods**. This code fixes the issue:
         send [ name, address, ]
         end() if end? # ⬅ ⬅ ⬅ remember to actually call `end()` when it's present
 ```
+
+The reason: I believe when you issue an asynchronous call from an asynchronous method (or any other place
+in the code), then NodeJS should be smart enough to put a hold so those async calls can finish before
+the process terminates. However, it would appear that the stream API's `end` events (or maybe those
+of `event-stream`) are lacking these smarts. The workaround is to use `remit` with three arguments
+`( data, send, end )`; that way, you 'grab' the `end` token and put everything on hold 'manually', as it
+were. Think of it as the baton in a relay race: you don't hold the baton—anyone could have it a finish the
+race; you hold the baton—you may walk as slowly as you like, and the game won't be over until you cross
+the finish or pass the baton.
+
 
 ## Motivation
 
