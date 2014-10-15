@@ -252,9 +252,9 @@ the process terminates.
 However, it would appear that the stream API's `end` events (or maybe those
 of `event-stream`) are lacking these smarts. The diagnostic is the odd last line that's missing from your
 final output. I always use PipeDreams' `$show()` method in the pipe to get a quick overview of what's going
-on; and, sure enough, when moving from that method from top to bottom and repeating the streaming
-process, somewhere a stream transformer will show up that takes that final piece of data as input but
-is late to the game when it's ready to give back the results.
+on; and, sure enough, when moving the `.pipe P.$show()` line from top to bottom in your pipe and repeating the streaming
+process, somewhere a stream transformer will show up that does take the final piece of data as input but
+is late to the game when it's ready to pass back the results.
 
 The workaround is to use `remit` with three arguments
 `( data, send, end )`; that way, you 'grab' the `end` token and put everything on hold 'manually', as it
