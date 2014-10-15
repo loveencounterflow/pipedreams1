@@ -460,6 +460,13 @@ Stream::pipeErr = (dest, opt) ->
       method send, end
       end() unless do_catch
 
+#-----------------------------------------------------------------------------------------------------------
+@$on_start = ( method ) ->
+  is_first = yes
+  return @remit ( data, send ) ->
+    method send if is_first
+    is_first = no
+    send data
 
 #===========================================================================================================
 # OBJECT CONVERSION
