@@ -231,6 +231,18 @@ premature `return` statements in `remit` methods**. This code fixes the issue:
       end()
 ```
 
+**Caveat 3**: **Always use `end()` with methods that issue asynchronous calls.**
+
+```coffee
+@$address_from_name = ->
+  return P.remit ( name, send, end ) => # ⬅ ⬅ ⬅ remember to use `end` with async stream transformers
+    if name?
+      db.get_address name, ( error, address ) =>
+        return send.error if error?
+        send [ name, address, ]
+        end() if end? # ⬅ ⬅ ⬅ remember to actually call `end()` when it's present
+```
+
 ## Motivation
 
 > **a stream is just a series of things over time**. if you were to re-implement your
