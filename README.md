@@ -230,7 +230,7 @@ premature `return` statements in `remit` methods**. This code fixes the issue:
       "we have #{good_bean_count} good beans!"
       end()
 ```
-
+<!--
 **Caveat 3**: **Always use `end()` with methods that issue asynchronous calls.**
 
 The short:
@@ -261,7 +261,7 @@ The workaround is to use `remit` with three arguments
 were. Think of it as the baton in a relay race: you don't hold the baton—anyone could have it and finish the
 race. You hold the baton—you may walk as slowly as you like, and the game won't be over until you cross
 the finish or pass the baton.
-
+ -->
 
 ## Motivation
 
