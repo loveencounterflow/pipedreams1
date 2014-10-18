@@ -230,11 +230,11 @@ premature `return` statements in `remit` methods**. This code fixes the issue:
       "we have #{good_bean_count} good beans!"
       end()
 ```
+<s>**Caveat 3**: **Always use `end()` with methods that issue asynchronous calls.**</s>
+
+<s>The short:</s>
+
 <s>
-**Caveat 3**: **Always use `end()` with methods that issue asynchronous calls.**
-
-The short:
-
 ```coffee
 @$address_from_name = ->
   return P.remit ( name, send, end ) => # ⬅ ⬅ ⬅ remember to use `end` with async stream transformers
@@ -244,24 +244,24 @@ The short:
         send [ name, address, ]
         end() if end? # ⬅ ⬅ ⬅ remember to actually call `end()` when it's present
 ```
+</s>
 
-The reason: I believe when you issue an asynchronous call from an asynchronous method (or any other place
+<s>The reason: I believe when you issue an asynchronous call from an asynchronous method (or any other place
 in the code), then NodeJS should be smart enough to put a hold so those async calls can finish before
-the process terminates.
+the process terminates.</s>
 
-However, it would appear that the stream API's `end` events (or maybe those
+<s>However, it would appear that the stream API's `end` events (or maybe those
 of `event-stream`) are lacking these smarts. The diagnostic is the odd last line that's missing from your
 final output. I always use PipeDreams' `$show()` method in the pipe to get a quick overview of what's going
 on; and, sure enough, when moving the `.pipe P.$show()` line from top to bottom in your pipe and repeating the streaming
 process, somewhere a stream transformer will show up that does take the final piece of data as input but
-is late to the game when it's ready to pass back the results.
+is late to the game when it's ready to pass back the results.</s>
 
-The workaround is to use `remit` with three arguments
+<s>The workaround is to use `remit` with three arguments
 `( data, send, end )`; that way, you 'grab' the `end` token and put everything on hold 'manually', as it
 were. Think of it as the baton in a relay race: you don't hold the baton—anyone could have it and finish the
 race. You hold the baton—you may walk as slowly as you like, and the game won't be over until you cross
-the finish or pass the baton.
-</s>
+the finish or pass the baton.</s>
 
 ## Motivation
 
