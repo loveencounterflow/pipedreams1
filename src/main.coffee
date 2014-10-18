@@ -525,9 +525,11 @@ Stream::pipeErr = (dest, opt) ->
     handler null, record
 
 #-----------------------------------------------------------------------------------------------------------
-@$show = ->
+@$show = ( badge = null ) ->
+  if badge? then  show = TRM.get_logger 'info', badge
+  else            show = info
   return @$ ( record, handler ) =>
-    info rpr record
+    show rpr record
     handler null, record
 
 #-----------------------------------------------------------------------------------------------------------
