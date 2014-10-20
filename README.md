@@ -263,6 +263,10 @@ were. Think of it as the baton in a relay race: you don't hold the baton—anyon
 race. You hold the baton—you may walk as slowly as you like, and the game won't be over until you cross
 the finish or pass the baton.</s>
 
+**Update**: this solution **does not work**. One possible solution may be to migrate to the [incipient
+PipeDreams2](https://github.com/loveencounterflow/pipedreams2).
+
+
 ## Motivation
 
 > **a stream is just a series of things over time**. if you were to re-implement your

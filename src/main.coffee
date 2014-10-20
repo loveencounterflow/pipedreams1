@@ -506,31 +506,12 @@ Stream::pipeErr = (dest, opt) ->
 #===========================================================================================================
 # DISPLAY / REPORTING
 #-----------------------------------------------------------------------------------------------------------
-@$show_and_quit = ->
-  return @$ ( record, handler ) =>
-    info rpr record
-    warn 'aborting from `PIPEDREAMS.show_and_quit`'
-    setImmediate -> process.exit()
-    handler null, record
-
-#-----------------------------------------------------------------------------------------------------------
-@$show_table = ( input_stream ) ->
-  ### TAINT may introduce a memory leak. ###
-  EASYTABLE = require 'easy-table'
-  records = []
-  input_stream.once 'end', =>
-    echo EASYTABLE.printArray records
-  return @$ ( record, handler ) =>
-    records.push record
-    handler null, record
-
-#-----------------------------------------------------------------------------------------------------------
 @$show = ( badge = null ) ->
   if badge? then  show = TRM.get_logger 'info', badge
   else            show = info
-  return @$ ( record, handler ) =>
+  return @remit ( record, send ) =>
     show rpr record
-    handler null, record
+    send record
 
 #-----------------------------------------------------------------------------------------------------------
 @$count = ( handler ) ->
