@@ -39,8 +39,8 @@ create_levellivestream    = require 'level-live-stream'
 @create_readstream            = HELPERS.create_readstream             .bind HELPERS
 @create_readstream_from_text  = HELPERS.create_readstream_from_text   .bind HELPERS
 @pimp_readstream              = HELPERS.pimp_readstream               .bind HELPERS
-@$                            = ES.map                                .bind ES
-@map                          = ES.mapSync                            .bind ES
+# @$                            = ES.map                                .bind ES
+# @map                          = ES.mapSync                            .bind ES
 @merge                        = ES.merge                              .bind ES
 @$split                       = ES.split                              .bind ES
 @$chain                       = ES.pipeline                           .bind ES
@@ -50,7 +50,12 @@ create_levellivestream    = require 'level-live-stream'
 @read_list                    = ES.readArray                          .bind ES
 @eos                          = { 'eos': true }
 
-
+@$ = ->
+  alert 'P.$ deprecated'
+  throw new Error 'deprecated'
+@map = ->
+  alert 'P.map deprecated'
+  throw new Error 'deprecated'
 
 #===========================================================================================================
 #
@@ -182,19 +187,18 @@ Stream::pipeErr = (dest, opt) ->
   #.........................................................................................................
   return ES.through on_data, on_end
 
-@remitXXX = @remit # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 #===========================================================================================================
 # DELETION
 #-----------------------------------------------------------------------------------------------------------
 @$skip_empty = ->
-  return @remitXXX ( record, send ) =>
+  return @remit ( record, send ) =>
     send record if record.length > 0
 
 #-----------------------------------------------------------------------------------------------------------
 @$skip_after = ( limit = 1 ) ->
   count = 0
-  return @remitXXX ( record, send ) =>
+  return @remit ( record, send ) =>
     count += 1
     send record if count <= limit
 
@@ -203,20 +207,20 @@ Stream::pipeErr = (dest, opt) ->
 
 #-----------------------------------------------------------------------------------------------------------
 @$trim = ->
-  return @$ ( line, handler ) =>
+  return @remit ( line, send ) =>
     send line.trim() if line?
 
 #-----------------------------------------------------------------------------------------------------------
 @$skip_comments = ( marker = '#' ) ->
   ### TAINT does only work after trimming ###
-  return @$ ( line, handler ) =>
+  return @remit ( line, send ) =>
     send line if line? and line[ 0 ] isnt marker
 
 #-----------------------------------------------------------------------------------------------------------
 @$skip_comments_2 = ->
   ### TAINT makeshift method awaiting a better solution ###
   matcher = /^\s*#/
-  return @$ ( line, handler ) =>
+  return @remit ( line, send ) =>
     send line if line? and not matcher.test line
 
 
@@ -269,15 +273,15 @@ Stream::pipeErr = (dest, opt) ->
     throw new Error "expected a number between 0 and 1, got #{rpr p}"
   #.........................................................................................................
   ### Handle trivial edge cases faster (hopefully): ###
-  return ( @remitXXX ( record, send ) => send record ) if p == 1
-  return ( @remitXXX ( record, send ) => null        ) if p == 0
+  return ( @remit ( record, send ) => send record ) if p == 1
+  return ( @remit ( record, send ) => null        ) if p == 0
   #.........................................................................................................
   headers = options?[ 'headers'     ] ? false
   seed    = options?[ 'seed'        ] ? null
   count   = 0
   rnd     = rnd_from_seed seed
   #.........................................................................................................
-  return @remitXXX ( record, send ) =>
+  return @remit ( record, send ) =>
     count += 1
     send record if ( count is 1 and headers ) or rnd() < p
 
@@ -469,7 +473,7 @@ Stream::pipeErr = (dest, opt) ->
 # OBJECT CONVERSION
 #-----------------------------------------------------------------------------------------------------------
 @$value_from_key = ( x ) ->
-  return @remitXXX ( key, send ) ->
+  return @remit ( key, send ) ->
     send x[ key ] if x?
 
 #-----------------------------------------------------------------------------------------------------------
@@ -567,7 +571,7 @@ Stream::pipeErr = (dest, opt) ->
   delimiter   = options[ 'delimiter'  ] ? ','
   qualifier   = options[ 'qualifier'  ] ? '"'
   #.........................................................................................................
-  return @remitXXX ( record, send ) =>
+  return @remit ( record, send ) =>
     if record?
       values = ( S record ).parseCSV delimiter, qualifier, '\\'
       if headers
@@ -588,7 +592,7 @@ Stream::pipeErr = (dest, opt) ->
   record_idx  = -1
   field_names = null
   #.........................................................................................................
-  return @remitXXX ( record, send ) =>
+  return @remit ( record, send ) =>
     if record?
       if ( record_idx += 1 ) is 0
         field_names = record
@@ -604,7 +608,7 @@ Stream::pipeErr = (dest, opt) ->
   if njs_util.isRegExp prefix then  starts_with = ( text, prefix ) -> prefix.test text
   else                              starts_with = ( text, prefix ) -> ( text.lastIndexOf prefix, 0 ) is 0
   #.........................................................................................................
-  return @remitXXX ( record, send ) =>
+  return @remit ( record, send ) =>
     if record?
       for old_field_name, field_value of record
         continue unless starts_with old_field_name, prefix
@@ -618,7 +622,7 @@ Stream::pipeErr = (dest, opt) ->
 
 #-----------------------------------------------------------------------------------------------------------
 @$dasherize_field_names = ->
-  return @remitXXX ( record, send ) =>
+  return @remit ( record, send ) =>
     if record?
       for old_field_name of record
         new_field_name = old_field_name.replace /_/g, '-'
@@ -657,26 +661,26 @@ Stream::pipeErr = (dest, opt) ->
 
 #-----------------------------------------------------------------------------------------------------------
 @$rename = ( old_field_name, new_field_name ) ->
-  return @remitXXX ( record, send ) =>
+  return @remit ( record, send ) =>
     if record?
       send @_rename record, old_field_name, new_field_name
 
 #-----------------------------------------------------------------------------------------------------------
 @$copy = ( old_field_name, new_field_name ) ->
-  return @remitXXX ( record, send ) =>
+  return @remit ( record, send ) =>
     if record?
       send @_copy record, old_field_name, new_field_name, 'copy'
 
 #-----------------------------------------------------------------------------------------------------------
 @$set = ( field_name, field_value ) ->
-  return @remitXXX ( record, send ) =>
+  return @remit ( record, send ) =>
     if record?
       record[ field_name ] = field_value
       send record
 
 #-----------------------------------------------------------------------------------------------------------
 @$pick = ( field_name ) ->
-  return @remitXXX ( record, send ) =>
+  return @remit ( record, send ) =>
     if record?
       value = record[ field_name ]
       if value is undefined
@@ -701,7 +705,7 @@ Stream::pipeErr = (dest, opt) ->
   when `transformer` returns `undefined`, then the field is removed from record (using `Array.splice` if
   `record` is a list). If `record[ field_name ]` happens to be undefined *before* `transformer` is called,
   and error is passed on instead. ###
-  return @remitXXX ( record, send ) =>
+  return @remit ( record, send ) =>
     value = record[ field_name ]
     return send.error new Error "field #{rpr field_name} not defined in #{rpr record}" if value is undefined
     #.......................................................................................................
