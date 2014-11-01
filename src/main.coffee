@@ -5,6 +5,7 @@ njs_util                  = require 'util'
 #...........................................................................................................
 TYPES                     = require 'coffeenode-types'
 TEXT                      = require 'coffeenode-text'
+CHR                       = require 'coffeenode-chr'
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
 badge                     = 'PIPEDREAMS/main'
@@ -32,6 +33,16 @@ COPYPASTE                 = require 'copypaste'
 #...........................................................................................................
 ### https://github.com/dominictarr/level-live-stream ###
 create_levellivestream    = require 'level-live-stream'
+#...........................................................................................................
+### https://github.com/dominictarr/sort-stream ###
+@$sort                    = require 'sort-stream'
+# #...........................................................................................................
+# ### https://github.com/dominictarr/pull-stream ###
+# pull_stream               = require 'pull-stream'
+# #...........................................................................................................
+# ### https://github.com/dominictarr/pull-stream-to-stream ###
+# pull_stream_to_stream     = require 'pull-stream-to-stream'
+
 
 #===========================================================================================================
 # GENERIC METHODS
@@ -76,6 +87,9 @@ create_levellivestream    = require 'level-live-stream'
       help valediction if valediction?
       end()
 
+#-----------------------------------------------------------------------------------------------------------
+@$split_chrs = ( message, valediction ) ->
+
 
 #===========================================================================================================
 # SPECIALIZED STREAMS
@@ -115,7 +129,10 @@ create_levellivestream    = require 'level-live-stream'
   # R.setMaxListeners 0
   return R
 
-
+# #-----------------------------------------------------------------------------------------------------------
+# @create_pullstream = ( P... ) ->
+#   ### TAINT experimental ###
+#   return pull_stream_to_stream pull_stream.values P...
 
 #===========================================================================================================
 # ERROR HANDLING
@@ -146,7 +163,7 @@ Stream::pipeErr = (dest, opt) ->
   on_end    = null
   #.........................................................................................................
   get_send = ( self ) ->
-    R         = (  data ) -> self.emit 'data',  data
+    R         = (  data ) -> self.emit 'data',  data # if data?
     R.error   = ( error ) -> self.emit 'error', error
     R.end     =           -> self.emit 'end'
     return R
@@ -223,6 +240,16 @@ Stream::pipeErr = (dest, opt) ->
   return @remit ( line, send ) =>
     send line if line? and not matcher.test line
 
+#-----------------------------------------------------------------------------------------------------------
+@$sink = ->
+  sink  = ( require 'fs' ).createWriteStream '/dev/null'
+  R = @create_throughstream()
+    .pipe @remit ( data, send ) ->
+      # process.stdout.write '0'
+      send '0'
+    .pipe sink
+  return R
+
 
 #===========================================================================================================
 # SAMPLING / THINNING OUT
@@ -295,6 +322,9 @@ Stream::pipeErr = (dest, opt) ->
   new_gate  = require 'floodgate'
   return new_gate interval: 1 / items_per_second
 
+#-----------------------------------------------------------------------------------------------------------
+@$pass = ->
+  return @remit ( data, send ) -> send data if data?
 
 #===========================================================================================================
 # COLLECTING
@@ -456,7 +486,7 @@ Stream::pipeErr = (dest, opt) ->
 #-----------------------------------------------------------------------------------------------------------
 @$_on_end = ( method, do_catch = no ) ->
   return @remit ( data, send, end ) ->
-    send data
+    send data if data?
     if end?
       method send, end
       end() unless do_catch
@@ -679,13 +709,24 @@ Stream::pipeErr = (dest, opt) ->
       send record
 
 #-----------------------------------------------------------------------------------------------------------
-@$pick = ( field_name ) ->
+@$pick = ( field_names..., options ) ->
+  if TYPES.isa_text options
+    options = {}
+    field_names.push options
+  throw new Error "need at least one field name" unless field_names.length > 0
+  fallback  = options[ 'fallback' ]
+  send_list = field_names.length > 1
   return @remit ( record, send ) =>
     if record?
-      value = record[ field_name ]
-      if value is undefined
-        return send.error new Error "field #{rpr field_name} not defined in #{rpr record}"
-      send value
+      Z = []
+      for field_name in field_names
+        value = record[ field_name ]
+        if value is undefined
+          if fallback is undefined
+            return send.error new Error "field #{rpr field_name} not defined in #{rpr record}"
+          value = fallback
+        Z.push value
+      send if send_list then Z else Z[ 0 ]
 
 #-----------------------------------------------------------------------------------------------------------
 @$insert = ( values... ) ->
