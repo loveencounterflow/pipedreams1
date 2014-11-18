@@ -88,14 +88,27 @@ create_levellivestream    = require 'level-live-stream'
       end()
 
 #-----------------------------------------------------------------------------------------------------------
-@$split_chrs = ( message, valediction ) ->
-
+@$split_chrs = ( settings ) ->
+  decoder     = null
+  settings   ?= {}
+  #.........................................................................................................
+  return @remit ( data, send ) =>
+    #.......................................................................................................
+    if TYPES.isa_text data
+      text      = data
+    #.......................................................................................................
+    else
+      decoder  ?= new ( require 'string_decoder' ).StringDecoder settings[ 'encoding' ] ? 'utf8'
+      text      = decoder.write data
+    #.......................................................................................................
+    for chr in CHR.chrs_from_text text, settings
+      send chr
 
 #===========================================================================================================
 # SPECIALIZED STREAMS
 #-----------------------------------------------------------------------------------------------------------
-@create_throughstream = ->
-  R = ES.through()
+@create_throughstream = ( P... ) ->
+  R = ES.through P...
   R.setMaxListeners 0
   return R
 
@@ -325,6 +338,16 @@ Stream::pipeErr = (dest, opt) ->
 #-----------------------------------------------------------------------------------------------------------
 @$pass = ->
   return @remit ( data, send ) -> send data if data?
+
+#-----------------------------------------------------------------------------------------------------------
+@$unique = ( transformer ) ->
+  seen = {}
+  return @remit ( data, send ) =>
+    data = if transformer? then transformer data else data
+    unless seen[ data ]?
+      seen[ data ] = 1
+      send data
+
 
 #===========================================================================================================
 # COLLECTING
