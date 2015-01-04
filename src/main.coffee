@@ -226,11 +226,22 @@ Stream::pipeErr = (dest, opt) ->
     send record if record.length > 0
 
 #-----------------------------------------------------------------------------------------------------------
+### TAINT rename to `$take` ###
+### TAINT end stream when limit reached ###
 @$skip_after = ( limit = 1 ) ->
   count = 0
   return @remit ( record, send ) =>
     count += 1
     send record if count <= limit
+
+#-----------------------------------------------------------------------------------------------------------
+@$take = ( limit = 1 ) ->
+  count = 0
+  return @remit ( record, send ) =>
+    count += 1
+    if count <= limit then  send record
+    else                    send.end()
+
 
 #-----------------------------------------------------------------------------------------------------------
 # @$stop = -> @remit ( data, send ) -> send.end()
@@ -340,14 +351,30 @@ Stream::pipeErr = (dest, opt) ->
   return @remit ( data, send ) -> send data if data?
 
 #-----------------------------------------------------------------------------------------------------------
-@$unique = ( transformer ) ->
+@$unique = ( as_key ) ->
+  ### Given an optional `as_key` method, return a transformer that skips all repeated items in the stream.
+  If `as_key` is given, it is called repeated with the stream data and expected to return an identifying
+  text (or other datatypes which can be meaningfully used as an JS object key, such as an integer); which
+  items to skip will be based on that key. If `as_key` is not given, then the streamed data itself is
+  used as key (which, in case all the data instances strigify as `[Object object]` or similar, means that
+  only the very first piece of data will make it through—probably not what you want). ###
   seen = {}
   return @remit ( data, send ) =>
-    data = if transformer? then transformer data else data
-    unless seen[ data ]?
-      seen[ data ] = 1
+    key = if as_key? then as_key data else data
+    unless seen[ key ]?
+      seen[ key ] = 1
       send data
 
+#-----------------------------------------------------------------------------------------------------------
+@$filter = ( filter ) ->
+  ### Given a `filter` method, return a stream transformer that will call `r = filter data` with each data
+  instance that comes down the stream and only re-send that data if `r` is strictly `true`. If `r` is
+  neither strictly `true` nor strictly `false`, an error will be sent to avoid silent failure. ###
+  return @remit ( data, send ) =>
+    switch r = filter data
+      when true   then send data
+      when false  then null
+      else send.error new Error "illegal filter result #{rpr r}"
 
 #===========================================================================================================
 # COLLECTING
