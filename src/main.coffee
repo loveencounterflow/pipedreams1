@@ -588,10 +588,9 @@ Stream::pipeErr = (dest, opt) ->
 # DISPLAY / REPORTING
 #-----------------------------------------------------------------------------------------------------------
 @$show = ( badge = null ) ->
-  if badge? then  show = TRM.get_logger 'info', badge
-  else            show = info
+  my_show = TRM.get_logger 'info', badge ? '*'
   return @remit ( record, send ) =>
-    show rpr record
+    my_show rpr record
     send record
 
 #-----------------------------------------------------------------------------------------------------------
