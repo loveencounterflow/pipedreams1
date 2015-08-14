@@ -1,5 +1,5 @@
 {
-  "name": "pipedreams",
+  "name": "pipedreams1",
   "version": "0.1.6",
   "description": "Common text operations for piped NodeJS streams.",
   "main": "lib/main.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/loveencounterflow/pipedreams.git"
+    "url": "https://github.com/loveencounterflow/pipedreams1.git"
   },
   "keywords": [
     "pipes",
@@ -19,10 +19,11 @@
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/loveencounterflow/pipedreams/issues"
+    "url": "https://github.com/loveencounterflow/pipedreams1/issues"
   },
-  "homepage": "https://github.com/loveencounterflow/pipedreams",
+  "homepage": "https://github.com/loveencounterflow/pipedreams1",
   "dependencies": {
+    "cnd": "^0.1.8",
     "coffeenode-bitsnpieces": "0.0.23",
     "coffeenode-chr": "^0.1.4",
     "coffeenode-trm": "^0.1.18",
